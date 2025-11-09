@@ -1,14 +1,18 @@
-// src/context/AuthContext.tsx
-
 import React, { createContext, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
-import type { AuthContextType, LoginCredentials, LoginResponse } from '../types/Financial';
+import axios from 'axios'; // Usiamo l'istanza base di axios per il login/register
+import type { AuthContextType, LoginCredentials, LoginResponse, RegisterRequest, BackendErrorResponse } from '../types/Financial';
+import { isAxiosError } from '../utils/errorUtils'; // Utilità per gestire gli errori Axios
 
+const API_BASE_URL = '/api/v1/auth'; // Base URL del tuo controller SpringBoot
 const TOKEN_KEY = 'bank_jwt_token';
 
 // eslint-disable-next-line react-refresh/only-export-components
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+export interface ExtendedAuthContextType extends AuthContextType {
+  register: (request: RegisterRequest) => Promise<void>;
+}
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [token, setToken] = useState<string | null>(null);
@@ -23,7 +27,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const login = async (credentials: LoginCredentials) => {
     try {
-      const response = await axios.post<LoginResponse>('/api/v1/auth/login', credentials);
+      const response = await axios.post<LoginResponse>(`${API_BASE_URL}/login`, credentials);
       const newToken = response.data.token;
       
       setToken(newToken);
@@ -31,9 +35,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       navigate('/dashboard', { replace: true });
 
-    } catch (error) {
-      console.error('Login fallito:', error);
-      throw new Error("Credenziali non valide o errore di rete."); 
+    } catch (err: unknown) {
+      if (isAxiosError(err) && err.response) {
+        const errorData = err.response.data as BackendErrorResponse;
+        throw new Error(errorData.error || "Credenziali non valide.");
+      }
+      throw new Error("Errore di rete o del server durante il login.");
+    }
+  };
+
+  const register = async (request: RegisterRequest) => {
+    try {
+      await axios.post(`${API_BASE_URL}/register`, request);
+      
+      await login({ email: request.email, password: request.password });
+
+    } catch (err: unknown) {
+      if (isAxiosError(err) && err.response) {
+        const errorData = err.response.data as BackendErrorResponse;
+        throw new Error(errorData.error || "Errore durante la registrazione.");
+      }
+      throw new Error("Errore di rete o del server durante la registrazione.");
     }
   };
 
@@ -43,11 +65,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     navigate('/login', { replace: true }); 
   };
 
-  const contextValue: AuthContextType = {
+  const contextValue: ExtendedAuthContextType = {
     isAuthenticated: !!token,
     token,
     login,
     logout,
+    register,
   };
 
   return (

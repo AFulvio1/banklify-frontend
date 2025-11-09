@@ -3,6 +3,7 @@ export interface AuthContextType {
   token: string | null;
   login: (credentials: LoginCredentials) => Promise<void>;
   logout: () => void;
+  register: (request: RegisterRequest) => Promise<void>;
 }
 
 export interface LoginCredentials {
@@ -13,6 +14,11 @@ export interface LoginCredentials {
 export interface LoginResponse {
   token: string;
   firstName?: string; 
+}
+
+export interface RegisterRequest extends LoginCredentials {
+  firstName: string;
+  lastName: string;
 }
 
 export interface BalanceDTO {
