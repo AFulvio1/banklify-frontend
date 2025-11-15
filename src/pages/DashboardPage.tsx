@@ -2,16 +2,17 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axiosInstance from '../api/axiosInstance';
 import { useAuth } from '../hooks/useAuth';
-import type { BalanceDTO, TransactionDTO, BackendErrorResponse } from '../types/Financial';
+import type { BalanceDTO, TransactionDTO, BackendErrorResponse } from '../types/Models';
 import { isAxiosError } from '../utils/errorUtils';
 import Spinner from '../components/common/Spinner'; 
 import ErrorMessage from '../components/common/ErrorMessage'; 
 import BalanceCard from '../components/dashboard/BalanceCard';
 import TransactionList from '../components/dashboard/TransactionList';
+import BanklifyLogoHorizontal from '../assets/logo-banklify-horizontal.png';
 
 const DashboardPage: React.FC = () => {
     const navigate = useNavigate();
-    const { isAuthenticated, userIban, logout } = useAuth();
+    const { isAuthenticated, userIban, userFirstName, logout } = useAuth();
     
     const [balance, setBalance] = useState<BalanceDTO | null>(null);
     const [transactions, setTransactions] = useState<TransactionDTO[]>([]);
@@ -32,7 +33,7 @@ const DashboardPage: React.FC = () => {
             const balanceResponse = await axiosInstance.get<BalanceDTO>(`/accounts/${userIban}/balance`);
             setBalance(balanceResponse.data);
 
-            const transactionsResponse = await axiosInstance.get<TransactionDTO[]>(`/accounts/${userIban}/movimenti?limit=10`);
+            const transactionsResponse = await axiosInstance.get<TransactionDTO[]>(`/transactions/${userIban}/movements?limit=10`);
             setTransactions(transactionsResponse.data);
 
         } catch (err: unknown) {
@@ -89,7 +90,19 @@ const DashboardPage: React.FC = () => {
     return (
         <div className="container-fluid bg-light min-vh-100 p-4">
             <header className="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
-                <h1 className="display-6 fw-bold text-dark">Dashboard Banca Digitale</h1>
+                <div className="d-flex align-items-center">
+                    <img 
+                        src={BanklifyLogoHorizontal} 
+                        alt="Banklify Logo" 
+                        className="img-fluid me-3"
+                        style={{ maxHeight: '100px' }} 
+                    />
+                    {userFirstName && (
+                        <h1 className="fs-5 fw-normal text-muted mb-0">
+                            Ciao, <span className="fw-semibold text-dark">{userFirstName}</span>!
+                        </h1>
+                    )}
+                </div>
                 <button 
                     onClick={logout} 
                     className="btn btn-outline-secondary"

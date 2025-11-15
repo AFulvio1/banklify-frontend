@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
-import type { RegisterRequest } from '../types/Financial';
+import type { RegisterRequest } from '../types/Models';
 import { Link } from 'react-router-dom';
 import ErrorMessage from '../components/common/ErrorMessage';
 import Spinner from '../components/common/Spinner';
+import BanklifyLogoHorizontal from '../assets/logo-banklify-horizontal.png';
 
 const RegisterPage: React.FC = () => {
   const { register } = useAuth(); 
@@ -52,6 +53,17 @@ const RegisterPage: React.FC = () => {
             </div>
             
             <div className="card-body">
+
+              <div className="text-center mb-4">
+                  <img 
+                      src={BanklifyLogoHorizontal} 
+                      alt="Banklify Logo" 
+                      className="img-fluid mb-3" 
+                      style={{ maxHeight: '100px' }} // Regola l'altezza
+                  />
+                  <h2 className="card-title fs-3 fw-bold">Accedi al tuo conto</h2>
+              </div>
+
               {error && <ErrorMessage message={error} />}
 
               <form onSubmit={handleSubmit}>

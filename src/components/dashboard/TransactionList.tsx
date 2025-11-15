@@ -1,5 +1,5 @@
 import React from 'react';
-import type { TransactionDTO } from '../../types/Financial';
+import type { TransactionDTO } from '../../types/Models';
 
 interface TransactionListProps {
   transactions: TransactionDTO[];
@@ -26,7 +26,6 @@ const TransactionList: React.FC<TransactionListProps> = ({ transactions }) => {
           {transactions.map((t) => {
             const amountValue = parseFloat(t.amount);
             const isDebit = amountValue < 0;
-            // Colori Bootstrap
             const amountColor = isDebit ? 'text-danger fw-bold' : 'text-success fw-bold';
             
             return (

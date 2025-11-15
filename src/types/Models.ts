@@ -2,6 +2,7 @@ export interface AuthContextType {
   isAuthenticated: boolean;
   token: string | null;
   userIban: string | null;
+  userFirstName: string | null;
   login: (credentials: LoginCredentials) => Promise<void>;
   logout: () => void;
   register: (request: RegisterRequest) => Promise<void>;
@@ -14,7 +15,8 @@ export interface LoginCredentials {
 
 export interface LoginResponse {
   token: string;
-  iban: string; 
+  iban: string;
+  firstName: string;
 }
 
 export interface RegisterRequest extends LoginCredentials {

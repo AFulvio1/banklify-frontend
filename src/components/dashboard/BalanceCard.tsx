@@ -1,5 +1,5 @@
 import React from 'react';
-import type { BalanceDTO } from '../../types/Financial';
+import type { BalanceDTO } from '../../types/Models';
 
 type BalanceCardProps = BalanceDTO; 
 

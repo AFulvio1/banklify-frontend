@@ -1,12 +1,13 @@
 import React, { createContext, useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import type { AuthContextType, LoginCredentials, LoginResponse, RegisterRequest, BackendErrorResponse } from '../types/Financial';
+import type { AuthContextType, LoginCredentials, LoginResponse, RegisterRequest, BackendErrorResponse } from '../types/Models';
 import { isAxiosError } from '../utils/errorUtils'; // Utilità per gestire gli errori Axios
 
 const API_BASE_URL = '/api/v1/auth';
 const TOKEN_KEY = 'bank_jwt_token';
 const IBAN_KEY = 'user_iban';
+const FIRST_NAME_KEY = 'user_first_name';
 
 export interface ExtendedAuthContextType extends AuthContextType {
     userIban: string | null;
@@ -24,7 +25,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [userIban, setUserIban] = useState<string | null>(
         localStorage.getItem(IBAN_KEY)
     );
-    
+    const [userFirstName, setUserFirstName] = useState<string | null>(
+      localStorage.getItem(FIRST_NAME_KEY)
+    );
+
     const [isLoaded, setIsLoaded] = useState(false);
     const navigate = useNavigate();
 
@@ -35,7 +39,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const login = async (credentials: LoginCredentials) => {
         try {
             const response = await axios.post<LoginResponse>(`${API_BASE_URL}/login`, credentials);
-            const { token: newToken, iban: userPrimaryIban } = response.data;
+            const { token: newToken, iban: userPrimaryIban, firstName: userPrimaryFirstName } = response.data;
             
             if (!userPrimaryIban) {
                 console.error("Login riuscito ma IBAN mancante nella risposta.");
@@ -44,8 +48,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
             setToken(newToken);
             setUserIban(userPrimaryIban);
+            setUserFirstName(userPrimaryFirstName);
+
             localStorage.setItem(TOKEN_KEY, newToken);
             localStorage.setItem(IBAN_KEY, userPrimaryIban);
+            localStorage.setItem(FIRST_NAME_KEY, userPrimaryFirstName);
             
             navigate('/dashboard', { replace: true });
 
@@ -76,8 +83,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const logout = () => {
         setToken(null);
         setUserIban(null);
+        setUserFirstName(null);
         localStorage.removeItem(TOKEN_KEY);
         localStorage.removeItem(IBAN_KEY);
+        localStorage.removeItem(FIRST_NAME_KEY);
         navigate('/login', { replace: true }); 
     };
 
@@ -85,6 +94,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isAuthenticated: !!token && isLoaded,
         token,
         userIban,
+        userFirstName,
         login,
         logout,
         register,

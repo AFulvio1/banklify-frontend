@@ -1,16 +1,18 @@
 import React, { useState } from 'react';
-import axiosInstance from '../api/axiosInstance';
-import type { TransferDTO, BackendErrorResponse } from '../types/Financial';
-import ErrorMessage from '../components/common/ErrorMessage';
 import { useNavigate } from 'react-router-dom';
-import { isAxiosError } from '../utils/errorUtils'; // Importa la nuova funzione
-
-const DEFAULT_SENDER_IBAN = 'IT60X0542811101000000123456';
+import axiosInstance from '../api/axiosInstance';
+import { useAuth } from '../hooks/useAuth';
+import type { TransferDTO, BackendErrorResponse } from '../types/Models';
+import { isAxiosError } from '../utils/errorUtils';
+import ErrorMessage from '../components/common/ErrorMessage'; 
+import BanklifyLogoHorizontal from '../assets/logo-banklify-horizontal.png';
 
 const TransferPage: React.FC = () => {
     const navigate = useNavigate();
+    const { userIban } = useAuth();
+    
     const [formData, setFormData] = useState<TransferDTO>({
-        senderIban: DEFAULT_SENDER_IBAN,
+        senderIban: userIban || '',
         receiverIban: '',
         amount: '',
         description: '',
@@ -36,34 +38,34 @@ const TransferPage: React.FC = () => {
             setLoading(false);
             return;
         }
+        
+        if (!formData.senderIban) {
+             setError("Errore di sessione: IBAN mittente non trovato.");
+             setLoading(false);
+             return;
+        }
 
         try {
             const payload: TransferDTO = {
                 ...formData,
-                amount: amountNumber.toFixed(2),
+                amount: amountNumber.toFixed(2), 
             };
 
             const response = await axiosInstance.post('/transactions/transfer', payload);
 
             setSuccessMessage(response.data.message || "Bonifico eseguito con successo!");
-            
             setFormData({ ...formData, receiverIban: '', amount: '', description: '' });
 
             setTimeout(() => navigate('/dashboard'), 3000); 
 
         } catch (err: unknown) {
             console.error("Errore Bonifico:", err);
-        
+            
             if (isAxiosError(err) && err.response) {
-                const responseData = err.response.data as BackendErrorResponse;
-                const backendError = responseData.error; 
-                if (backendError) {
-                    setError(backendError); 
-                } else {
-                    setError("Si è verificato un errore del server senza messaggio specifico.");
-                }
+                const errorData = err.response.data as BackendErrorResponse;
+                setError(errorData.error || `Errore HTTP ${err.response.status}.`); 
             } else {
-                setError(err instanceof Error ? err.message : "Errore di rete sconosciuto.");
+                setError("Si è verificato un errore di rete. Riprova.");
             }
         } finally {
             setLoading(false);
@@ -71,78 +73,100 @@ const TransferPage: React.FC = () => {
     };
 
     return (
-        <div className="p-6 max-w-lg mx-auto bg-white rounded-xl shadow-md">
-            <h2 className="text-3xl font-bold mb-6 text-center">Nuovo Bonifico</h2>
-            
-            {successMessage && (
-                <div className="p-4 mb-4 text-sm text-green-700 bg-green-100 rounded-lg" role="alert">
-                    {successMessage}
+        <div className="container py-5">
+            <div className="card shadow-lg mx-auto" style={{ maxWidth: '600px' }}>
+                <div className="card-header bg-primary text-white">
+                    <div className="text-center mb-2">
+                        <img 
+                            src={BanklifyLogoHorizontal} 
+                            alt="Banklify Logo" 
+                            className="img-fluid" 
+                            style={{ maxHeight: '100px' }} // Regola l'altezza
+                        />
+                    </div>
+                    <h2 className="card-title mb-0 fs-4">Esegui un Nuovo Bonifico</h2>
                 </div>
-            )}
-            
-            {error && <ErrorMessage message={error} />}
+                <div className="card-body p-4">
+                    
+                    {/* Messaggi di Feedback */}
+                    {successMessage && (
+                        <div className="alert alert-success" role="alert">
+                            {successMessage}
+                        </div>
+                    )}
+                    {error && <ErrorMessage message={error} />}
 
-            <form onSubmit={handleSubmit} className="space-y-4">
-                
-                <label className="block">
-                    <span className="text-gray-700">IBAN Mittente</span>
-                    <input
-                        type="text"
-                        name="senderIban"
-                        value={formData.senderIban}
-                        readOnly // L'IBAN mittente dovrebbe essere fisso e non modificabile
-                        className="mt-1 block w-full rounded-md bg-gray-100 border-gray-300 shadow-sm p-2"
-                    />
-                </label>
+                    <form onSubmit={handleSubmit} className="needs-validation" noValidate>
+                        
+                        <div className="mb-3">
+                            <label htmlFor="senderIban" className="form-label fw-semibold">IBAN Mittente</label>
+                            <input
+                                type="text"
+                                id="senderIban"
+                                value={formData.senderIban}
+                                readOnly 
+                                className="form-control bg-light"
+                                placeholder="Caricamento IBAN..."
+                            />
+                            <div className="form-text">I fondi saranno prelevati da questo conto.</div>
+                        </div>
 
-                <label className="block">
-                    <span className="text-gray-700">IBAN Destinatario</span>
-                    <input
-                        type="text"
-                        name="receiverIban"
-                        value={formData.receiverIban}
-                        onChange={handleChange}
-                        required
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2"
-                        placeholder="IT..."
-                        minLength={15}
-                    />
-                </label>
+                        <div className="mb-3">
+                            <label htmlFor="receiverIban" className="form-label fw-semibold">IBAN Destinatario</label>
+                            <input
+                                type="text"
+                                id="receiverIban"
+                                name="receiverIban"
+                                value={formData.receiverIban}
+                                onChange={handleChange}
+                                required
+                                minLength={15}
+                                className="form-control"
+                                placeholder="ITxx xxxxx xxxxx xxxxxxxxxxxx"
+                            />
+                            <div className="invalid-feedback">Inserisci un IBAN destinatario valido.</div>
+                        </div>
 
-                <label className="block">
-                    <span className="text-gray-700">Importo (€)</span>
-                    <input
-                        type="number"
-                        name="amount"
-                        value={formData.amount}
-                        onChange={handleChange}
-                        required
-                        min="0.01"
-                        step="0.01"
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2"
-                    />
-                </label>
+                        <div className="mb-3">
+                            <label htmlFor="amount" className="form-label fw-semibold">Importo (€)</label>
+                            <input
+                                type="number"
+                                id="amount"
+                                name="amount"
+                                value={formData.amount}
+                                onChange={handleChange}
+                                required
+                                min="0.01"
+                                step="0.01"
+                                className="form-control"
+                                placeholder="0.00"
+                            />
+                        </div>
 
-                <label className="block">
-                    <span className="text-gray-700">Causale</span>
-                    <textarea
-                        name="description"
-                        value={formData.description}
-                        onChange={handleChange}
-                        required
-                        rows={2}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2"
-                    />
-                </label>
+                        <div className="mb-4">
+                            <label htmlFor="description" className="form-label fw-semibold">Causale</label>
+                            <textarea
+                                id="description"
+                                name="description"
+                                value={formData.description}
+                                onChange={handleChange}
+                                required
+                                rows={2}
+                                className="form-control"
+                                placeholder="Motivo del bonifico"
+                            />
+                        </div>
 
-                <button
-                    type="submit"
-                    disabled={loading}
-                    className="w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                >
-                    {loading ? 'Elaborazione...' : 'Conferma Bonifico'}
-                </button>
-            </form>
+                        <button
+                            type="submit"
+                            disabled={loading || !formData.senderIban}
+                            className="btn btn-success btn-lg w-100"
+                        >
+                            {loading ? 'Elaborazione in corso...' : 'Conferma Bonifico'}
+                        </button>
+                    </form>
+                </div>
+            </div>
         </div>
     );
 };
