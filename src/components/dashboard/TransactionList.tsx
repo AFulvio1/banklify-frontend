@@ -13,30 +13,32 @@ const formatCurrency = (amount: string): string => {
 const TransactionList: React.FC<TransactionListProps> = ({ transactions }) => {
 
   return (
-    <div className="overflow-x-auto">
-      <table className="min-w-full divide-y divide-gray-200">
-        <thead className="bg-gray-50">
-          <tr>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data</th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo / Descrizione</th>
-            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Importo</th>
+    <div className="table-responsive">
+      <table className="table table-hover table-striped">
+        <thead>
+          <tr className="table-light">
+            <th scope="col">Data</th>
+            <th scope="col">Descrizione</th>
+            <th scope="col" className="text-end">Importo</th>
           </tr>
         </thead>
-        <tbody className="bg-white divide-y divide-gray-200">
+        <tbody>
           {transactions.map((t) => {
-            const isDebit = parseFloat(t.amount) < 0;
-            const amountColor = isDebit ? 'text-red-600' : 'text-green-600';
+            const amountValue = parseFloat(t.amount);
+            const isDebit = amountValue < 0;
+            // Colori Bootstrap
+            const amountColor = isDebit ? 'text-danger fw-bold' : 'text-success fw-bold';
             
             return (
               <tr key={t.transactionId}>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                <td className="text-muted">
                   {new Date(t.timestamp).toLocaleDateString('it-IT')}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                <td>
                   {t.description}
-                  <p className="text-xs text-gray-400 mt-0.5">{t.transactionType}</p>
+                  <p className="text-sm text-secondary mb-0 mt-1">{t.transactionType.replace('_', ' ')}</p>
                 </td>
-                <td className={`px-6 py-4 whitespace-nowrap text-sm font-bold text-right ${amountColor}`}>
+                <td className={`text-end ${amountColor}`}>
                   {formatCurrency(t.amount)}
                 </td>
               </tr>
