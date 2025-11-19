@@ -44,7 +44,6 @@ const RegisterPage: React.FC = () => {
   return (
     <div className="container mt-5">
       <div className="row justify-content-center">
-        {/* Il form è leggermente più largo per ospitare più campi */}
         <div className="col-md-8 col-lg-5"> 
           
           <div className="card shadow-lg">
@@ -59,7 +58,7 @@ const RegisterPage: React.FC = () => {
                       src={BanklifyLogoHorizontal} 
                       alt="Banklify Logo" 
                       className="img-fluid mb-3" 
-                      style={{ maxHeight: '100px' }} // Regola l'altezza
+                      style={{ maxHeight: '100px' }}
                   />
                   <h2 className="card-title fs-3 fw-bold">Accedi al tuo conto</h2>
               </div>
@@ -109,7 +108,6 @@ const RegisterPage: React.FC = () => {
             </div>
           </div>
           
-          {/* Riferimento alla Pagina di Login */}
           <p className="mt-3 text-center">
             Hai già un conto? <Link to="/login" className="text-decoration-none">Accedi qui</Link>
           </p>

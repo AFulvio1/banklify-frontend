@@ -1,73 +1,70 @@
-# React + TypeScript + Vite
+# Banklify Frontend Application 💻
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+**Banklify Frontend** is the user-facing Single Page Application (SPA) for the Digital Banking platform. It provides an intuitive and responsive interface for users to manage their accounts, perform secure transactions, and view their financial history.
 
-Currently, two official plugins are available:
+Built with **React** and styled with **Bootstrap**, this application seamlessly integrates with the [Banklify Backend API](https://github.com/AFulvio1/banklify-backend.git) (link da sostituire con il tuo repo backend) to deliver a modern banking experience.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+---
 
-## React Compiler
+## 🚀 Tech Stack
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+* **Framework:** React 18+
+* **Build Tool:** Vite
+* **Styling:** Bootstrap 5, Custom CSS
+* **Routing:** React Router DOM
+* **API Client:** Axios
+* **Package Manager:** npm
+* **Language:** JavaScript (ES6+)
 
-## Expanding the ESLint configuration
+---
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## ✨ Key Features
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+* **🔐 User Authentication:**
+    * Responsive login and registration forms.
+    * Secure handling of JWT tokens for session management.
+* **📊 Account Dashboard:**
+    * Clear display of available and ledger balances.
+    * Personalized welcome message.
+* **💸 Fund Transfers:**
+    * Intuitive form for initiating bank transfers.
+    * Real-time feedback on transaction status (success/failure).
+* **📜 Transaction History:**
+    * Paginated list of all incoming and outgoing movements.
+    * Readable date and transaction type display.
+* **Responsive Design:**
+    * Optimized for various screen sizes (desktop, tablet, mobile) using Bootstrap's grid system.
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+---
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+## 🛠 Getting Started
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### Prerequisites
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+* **Node.js** (LTS version recommended)
+* **npm** (Node Package Manager)
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+### Installation
+
+1.  **Clone the repository**
+    ```bash
+    git clone https://github.com/AFulvio1/banklify-frontend.git
+    cd banklify-frontend
+    ```
+
+2.  **Install dependencies**
+    ```bash
+    npm install
+    ```
+
+3.  **Run the BackEnd**
+    *Make sure that your [Banklify Backend API](https://github.com/AFulvio1/banklify-backend.git) is running.*
+
+4.  **Run the application**
+    ```bash
+    npm run dev
+    ```
+    The application will open in your browser at `http://localhost:5173`.
+
+---
+
