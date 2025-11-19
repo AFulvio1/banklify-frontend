@@ -127,7 +127,7 @@ const DashboardPage: React.FC = () => {
                                 onClick={() => navigate('/transfer')} 
                                 className="btn btn-primary btn-lg"
                             >
-                                Nuovo Bonifico 💸
+                                Nuovo Bonifico
                             </button>
                         </div>
                     </div>

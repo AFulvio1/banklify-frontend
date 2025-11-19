@@ -22,6 +22,13 @@ export interface LoginResponse {
 export interface RegisterRequest extends LoginCredentials {
   firstName: string;
   lastName: string;
+  taxCode: string;
+  street: string;
+  houseNumber: string;
+  city: string;
+  province: string;
+  zipCode: string;
+  phoneNumber: string;
 }
 
 export interface BalanceDTO {
@@ -32,7 +39,7 @@ export interface BalanceDTO {
 
 export interface TransactionDTO {
   transactionId: number;
-  timestamp: string;
+  eventTimestamp: string;
   amount: string;
   transactionType: string;
   description: string;

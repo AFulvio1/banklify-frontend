@@ -21,9 +21,7 @@ const LoginPage: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      // Chiama la funzione di login definita nel tuo AuthContext
       await login(credentials);
-      // Reindirizzamento gestito internamente dal contesto
     } catch (err: unknown) {
       if (err instanceof Error) {
         setError(err.message || "Credenziali non valide. Riprova.");
@@ -42,7 +40,7 @@ const LoginPage: React.FC = () => {
           
           <div className="card shadow-lg">
             <div className="card-header text-center bg-primary text-white">
-              <h4 className="mb-0">Accedi a Banklify</h4>
+              <h4 className="mb-0">Login</h4>
             </div>
             
             <div className="card-body">
@@ -54,7 +52,6 @@ const LoginPage: React.FC = () => {
                       className="img-fluid mb-3" 
                       style={{ maxHeight: '100px' }}
                   />
-                  <h2 className="card-title fs-3 fw-bold">Accedi al tuo conto</h2>
               </div>
 
               {error && <ErrorMessage message={error} />}

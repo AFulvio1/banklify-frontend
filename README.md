@@ -14,7 +14,7 @@ Built with **React** and styled with **Bootstrap**, this application seamlessly 
 * **Routing:** React Router DOM
 * **API Client:** Axios
 * **Package Manager:** npm
-* **Language:** JavaScript (ES6+)
+* **Language:** TypeScript
 
 ---
 

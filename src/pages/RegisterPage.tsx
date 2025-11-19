@@ -14,7 +14,16 @@ const RegisterPage: React.FC = () => {
     password: '',
     firstName: '',
     lastName: '',
+    taxCode: '',
+    street: '',
+    houseNumber: '',
+    city: '',
+    province: '',
+    zipCode: '',
+    phoneNumber: '',
   });
+
+  const [confirmPassword, setConfirmPassword] = useState('');
   
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -23,14 +32,29 @@ const RegisterPage: React.FC = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  const handleConfirmPasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setConfirmPassword(e.target.value);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
 
+    if (formData.password !== confirmPassword) {
+      setError('Le password non coincidono.');
+      setLoading(false);
+      return; 
+    }
+
+    if (formData.password.length < 8) {
+        setError('La password deve essere di almeno 8 caratteri.');
+        setLoading(false);
+        return;
+    }
+
     try {
       await register(formData);
-      // Login automatico e reindirizzamento gestiti nel contesto
     } catch (err: unknown) {
         if (err instanceof Error) {
             setError(err.message || 'Errore sconosciuto durante la registrazione.');
@@ -41,6 +65,23 @@ const RegisterPage: React.FC = () => {
     }
   };
 
+  const isFormInvalid = 
+    loading ||
+    !formData.firstName ||
+    !formData.lastName ||
+    !formData.email ||
+    !formData.password ||
+    !confirmPassword ||
+    formData.password !== confirmPassword ||
+    formData.password.length < 8 ||
+    !formData.taxCode ||
+    !formData.street ||
+    !formData.houseNumber ||
+    !formData.city ||
+    !formData.province ||
+    !formData.zipCode ||
+    !formData.phoneNumber;
+
   return (
     <div className="container mt-5">
       <div className="row justify-content-center">
@@ -48,7 +89,7 @@ const RegisterPage: React.FC = () => {
           
           <div className="card shadow-lg">
             <div className="card-header text-center bg-success text-white">
-              <h4 className="mb-0">Crea il tuo Conto Banklify</h4>
+              <h4 className="mb-0">Registrati</h4>
             </div>
             
             <div className="card-body">
@@ -60,14 +101,12 @@ const RegisterPage: React.FC = () => {
                       className="img-fluid mb-3" 
                       style={{ maxHeight: '100px' }}
                   />
-                  <h2 className="card-title fs-3 fw-bold">Accedi al tuo conto</h2>
               </div>
 
               {error && <ErrorMessage message={error} />}
 
               <form onSubmit={handleSubmit}>
                 
-                {/* Riga per Nome e Cognome */}
                 <div className="row mb-3">
                     <div className="col-6">
                         <label htmlFor="firstName" className="form-label">Nome</label>
@@ -79,22 +118,120 @@ const RegisterPage: React.FC = () => {
                     </div>
                 </div>
 
-                {/* Email */}
+                <div className="mb-3">
+                  <label htmlFor="taxCode" className="form-label">Codice Fiscale</label>
+                  <input 
+                    name="taxCode" 
+                    type="text" 
+                    id="taxCode" 
+                    placeholder="RSSMRA80A01H501U" 
+                    value={formData.taxCode} 
+                    onChange={handleChange} 
+                    required 
+                    className="form-control text-uppercase"
+                    disabled={loading}
+                    maxLength={16}
+                  />
+                </div>
+
+                <div className="row mb-3">
+                    <div className="col-md-9">
+                        <label htmlFor="street" className="form-label">Via / Piazza</label>
+                        <input name="street" type="text" id="street" placeholder="Via Roma" value={formData.street} onChange={handleChange} required className="form-control" disabled={loading}/>
+                    </div>
+                    <div className="col-md-3">
+                        <label htmlFor="houseNumber" className="form-label">N° Civico</label>
+                        <input name="houseNumber" type="text" id="houseNumber" placeholder="10" value={formData.houseNumber} onChange={handleChange} required className="form-control" disabled={loading}/>
+                    </div>
+                </div>
+
+                <div className="row mb-3">
+                    <div className="col-md-3">
+                        <label htmlFor="zipCode" className="form-label">CAP</label>
+                        <input name="zipCode" type="text" id="zipCode" placeholder="20121" value={formData.zipCode} onChange={handleChange} required className="form-control" disabled={loading} maxLength={5}/>
+                    </div>
+                    <div className="col-md-6">
+                        <label htmlFor="city" className="form-label">Città</label>
+                        <input name="city" type="text" id="city" placeholder="Milano" value={formData.city} onChange={handleChange} required className="form-control" disabled={loading}/>
+                    </div>
+                    <div className="col-md-3">
+                        <label htmlFor="province" className="form-label">Provincia</label>
+                        <input 
+                            name="province" 
+                            type="text" 
+                            id="province" 
+                            placeholder="MI" 
+                            value={formData.province} 
+                            onChange={handleChange} 
+                            required 
+                            className="form-control text-uppercase" 
+                            disabled={loading}
+                            maxLength={2}
+                        />
+                    </div>
+                </div>
+
+                <div className="mb-3">
+                  <label htmlFor="phoneNumber" className="form-label">Telefono</label>
+                  <input 
+                    name="phoneNumber" 
+                    type="tel"
+                    id="phoneNumber" 
+                    placeholder="+39 333 1234567" 
+                    value={formData.phoneNumber} 
+                    onChange={handleChange} 
+                    required 
+                    className="form-control" 
+                    disabled={loading}
+                  />
+                </div>
+
                 <div className="mb-3">
                   <label htmlFor="email" className="form-label">Email</label>
                   <input name="email" type="email" id="email" placeholder="La tua email" value={formData.email} onChange={handleChange} required className="form-control" disabled={loading}/>
                 </div>
 
-                {/* Password */}
-                <div className="mb-4">
-                  <label htmlFor="password" className="form-label">Password</label>
-                  <input name="password" type="password" id="password" placeholder="Scegli una password sicura" value={formData.password} onChange={handleChange} required className="form-control" disabled={loading}/>
+                <div className="row mb-4">
+                    <div className="col-md-6 mb-3 mb-md-0">
+                        <label htmlFor="password" className="form-label">Password</label>
+                        <input 
+                            name="password" 
+                            type="password" 
+                            id="password" 
+                            placeholder="Password" 
+                            value={formData.password} 
+                            onChange={handleChange} 
+                            required 
+                            className="form-control" 
+                            disabled={loading}
+                            minLength={8}
+                        />
+                    </div>
+                    <div className="col-md-6">
+                        <label htmlFor="confirmPassword" className="form-label">Conferma Password</label>
+                        <input 
+                            name="confirmPassword" 
+                            type="password" 
+                            id="confirmPassword" 
+                            placeholder="Ripeti Password" 
+                            value={confirmPassword} 
+                            onChange={handleConfirmPasswordChange} 
+                            required 
+                            className={`form-control ${confirmPassword && formData.password !== confirmPassword ? 'is-invalid' : ''}`}
+                            disabled={loading}
+                        />
+                        {confirmPassword && formData.password !== confirmPassword && (
+                            <div className="invalid-feedback">
+                                Le password non coincidono
+                            </div>
+                        )}
+                    </div>
                 </div>
                 
                 <button 
                   type="submit" 
-                  disabled={loading}
-                  className="btn btn-success w-100"
+                  disabled={isFormInvalid}
+                  className="btn btn-primary w-100"
                 >
                   {loading ? (
                     <>
