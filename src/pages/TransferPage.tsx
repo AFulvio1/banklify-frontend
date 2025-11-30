@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axiosInstance from '../api/axiosInstance';
 import { useAuth } from '../hooks/useAuth';
-import type { TransferDTO, BackendErrorResponse } from '../types/Models';
+import type { TransferDTO } from '../types/Models';
 import { isAxiosError } from '../utils/errorUtils';
 import ErrorMessage from '../components/common/ErrorMessage'; 
 import BanklifyLogoHorizontal from '../assets/logo-banklify-horizontal.png';
@@ -14,6 +14,7 @@ const TransferPage: React.FC = () => {
     const [formData, setFormData] = useState<TransferDTO>({
         senderIban: userIban || '',
         receiverIban: '',
+        receiverName: '',
         amount: '',
         description: '',
     });
@@ -98,12 +99,18 @@ const TransferPage: React.FC = () => {
 
         } catch (err: unknown) {
             console.error("Errore Bonifico:", err);
-            
+            setSuccessMessage(null);
+
             if (isAxiosError(err) && err.response) {
-                const errorData = err.response.data as BackendErrorResponse;
-                setError(errorData.error || `Errore HTTP ${err.response.status}.`); 
+                const responseData = err.response.data as { error: string }; 
+                
+                if (responseData && responseData.error) {
+                    setError(responseData.error);
+                } else {
+                    setError("Errore del server non specificato.");
+                }
             } else {
-                setError("Si è verificato un errore di rete. Riprova.");
+                setError("Errore di rete o imprevisto.");
             }
         } finally {
             setLoading(false);
@@ -162,6 +169,20 @@ const TransferPage: React.FC = () => {
                                 placeholder="Caricamento IBAN..."
                             />
                             <div className="form-text">I fondi saranno prelevati da questo conto.</div>
+                        </div>
+
+                        <div className="mb-3">
+                            <label htmlFor="receiverIban" className="form-label fw-semibold">Nome Destinatario</label>
+                            <input
+                                type="text"
+                                id="receiverName"
+                                name="receiverName"
+                                value={formData.receiverName}
+                                onChange={handleChange}
+                                required
+                                className="form-control"
+                                placeholder="Mario Rossi"
+                            />
                         </div>
 
                         <div className="mb-3">

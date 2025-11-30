@@ -1,254 +1,303 @@
 import React, { useState } from 'react';
-import { useAuth } from '../hooks/useAuth';
-import type { RegisterRequest } from '../types/Models';
-import { Link } from 'react-router-dom';
-import ErrorMessage from '../components/common/ErrorMessage';
+import { Link, useNavigate } from 'react-router-dom';
+import axiosInstance from '../api/axiosInstance';
 import Spinner from '../components/common/Spinner';
+import ErrorMessage from '../components/common/ErrorMessage';
 import BanklifyLogoHorizontal from '../assets/logo-banklify-horizontal.png';
 
 const RegisterPage: React.FC = () => {
-  const { register } = useAuth(); 
-  
-  const [formData, setFormData] = useState<RegisterRequest>({
-    email: '',
-    password: '',
-    firstName: '',
-    lastName: '',
-    taxCode: '',
-    street: '',
-    houseNumber: '',
-    city: '',
-    province: '',
-    zipCode: '',
-    phoneNumber: '',
-  });
-
-  const [confirmPassword, setConfirmPassword] = useState('');
-  
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
+  const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
+    birthDate: '', 
+    taxCode: '',
+    address: '',
+    houseNumber: '',
+    zipCode: '',
+    city: '',
+    province: '',
+    phoneNumber: '',
+    email: '',
+    password: '',
+    confirmPassword: ''
+  });
 
-  const handleConfirmPasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setConfirmPassword(e.target.value);
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     setError(null);
 
-    if (formData.password !== confirmPassword) {
-      setError('Le password non coincidono.');
-      setLoading(false);
-      return; 
+    if (formData.password !== formData.confirmPassword) {
+      setError("Le password non coincidono.");
+      return;
     }
 
-    if (formData.password.length < 8) {
-        setError('La password deve essere di almeno 8 caratteri.');
-        setLoading(false);
-        return;
-    }
+    setLoading(true);
 
     try {
-      await register(formData);
+      await axiosInstance.post('/auth/register', {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        birthDate: formData.birthDate,
+        taxCode: formData.taxCode,
+        email: formData.email,
+        password: formData.password,
+        address: formData.address,
+        houseNumber: formData.houseNumber,
+        city: formData.city,
+        zipCode: formData.zipCode,
+        province: formData.province,
+        phoneNumber: formData.phoneNumber
+      });
+
+      navigate('/login', { state: { successMessage: 'Registrazione avvenuta con successo! Accedi ora.' } });
     } catch (err: unknown) {
-        if (err instanceof Error) {
-            setError(err.message || 'Errore sconosciuto durante la registrazione.');
-        } else {
-            setError(String(err) || 'Errore sconosciuto durante la registrazione.');
-        }
-        setLoading(false);
+      if (err instanceof Error) {
+        setError(err.message || "Errore durante la registrazione.");
+      } else {
+        setError(String(err) || "Errore durante la registrazione.");
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
-  const isFormInvalid = 
-    loading ||
-    !formData.firstName ||
-    !formData.lastName ||
-    !formData.email ||
-    !formData.password ||
-    !confirmPassword ||
-    formData.password !== confirmPassword ||
-    formData.password.length < 8 ||
-    !formData.taxCode ||
-    !formData.street ||
-    !formData.houseNumber ||
-    !formData.city ||
-    !formData.province ||
-    !formData.zipCode ||
-    !formData.phoneNumber;
-
   return (
-    <div className="container mt-5">
-      <div className="row justify-content-center">
-        <div className="col-md-8 col-lg-5"> 
-          
-          <div className="card shadow-lg">
-            <div className="card-header text-center bg-success text-white">
-              <h4 className="mb-0">Registrati</h4>
-            </div>
-            
-            <div className="card-body">
+    <div className="min-vh-100 bg-light d-flex flex-column align-items-center justify-content-center p-4">
+      
+      <div className="mb-4 text-center">
+        <img 
+          src={BanklifyLogoHorizontal} 
+          alt="Banklify" 
+          className="img-fluid"
+          style={{ maxHeight: '100px' }} 
+        />
+      </div>
 
-              <div className="text-center mb-4">
-                  <img 
-                      src={BanklifyLogoHorizontal} 
-                      alt="Banklify Logo" 
-                      className="img-fluid mb-3" 
-                      style={{ maxHeight: '100px' }}
-                  />
+      <div className="card shadow-lg border-0 w-100 overflow-hidden rounded-4" style={{ maxWidth: '1200px' }}>
+        
+        <div className="py-3 text-center text-white fw-bold fs-4 rounded-top-4" style={{ backgroundColor: '#0d2e5b' }}>
+          Registrati
+        </div>
+
+        <div className="card-body p-5">
+          
+          {error && <ErrorMessage message={error} />}
+
+          <form onSubmit={handleSubmit}>
+            
+            <div className="row g-5">
+              
+              <div className="col-lg-6">
+                <div className="row g-3">
+                  <div className="col-md-6">
+                    <label className="form-label fw-medium">Nome</label>
+                    <input
+                      type="text"
+                      name="firstName"
+                      className="form-control"
+                      placeholder="Mario"
+                      value={formData.firstName}
+                      onChange={handleChange}
+                      required
+                    />
+                  </div>
+                  <div className="col-md-6">
+                    <label className="form-label fw-medium">Cognome</label>
+                    <input
+                      type="text"
+                      name="lastName"
+                      className="form-control"
+                      placeholder="Rossi"
+                      value={formData.lastName}
+                      onChange={handleChange}
+                      required
+                    />
+                  </div>
+
+                  <div className="col-12">
+                    <label className="form-label fw-medium">Data di Nascita</label>
+                    <input
+                      type="date"
+                      name="birthDate"
+                      className="form-control"
+                      value={formData.birthDate}
+                      onChange={handleChange}
+                      required
+                    />
+                  </div>
+
+                  <div className="col-12">
+                    <label className="form-label fw-medium">Codice Fiscale</label>
+                    <input
+                      type="text"
+                      name="taxCode"
+                      className="form-control text-uppercase"
+                      placeholder="RSSMRA80A01H501U"
+                      value={formData.taxCode}
+                      onChange={handleChange}
+                      required
+                      maxLength={16}
+                    />
+                  </div>
+
+                  <div className="col-12 mt-4"></div>
+
+                  <div className="col-md-9">
+                    <label className="form-label fw-medium">Via / Piazza</label>
+                    <input
+                      type="text"
+                      name="address"
+                      className="form-control"
+                      placeholder="Via Roma"
+                      value={formData.address}
+                      onChange={handleChange}
+                      required
+                    />
+                  </div>
+                  <div className="col-md-3">
+                    <label className="form-label fw-medium">N° Civico</label>
+                    <input
+                      type="text"
+                      name="houseNumber"
+                      className="form-control"
+                      placeholder="10"
+                      value={formData.houseNumber}
+                      onChange={handleChange}
+                      required
+                    />
+                  </div>
+                  <div className="col-md-3">
+                    <label className="form-label fw-medium">CAP</label>
+                    <input
+                      type="text"
+                      name="zipCode"
+                      className="form-control"
+                      placeholder="20121"
+                      value={formData.zipCode}
+                      onChange={handleChange}
+                      required
+                      maxLength={5}
+                    />
+                  </div>
+                  <div className="col-md-6">
+                    <label className="form-label fw-medium">Città</label>
+                    <input
+                      type="text"
+                      name="city"
+                      className="form-control"
+                      placeholder="Milano"
+                      value={formData.city}
+                      onChange={handleChange}
+                      required
+                    />
+                  </div>
+                  <div className="col-md-3">
+                    <label className="form-label fw-medium">Provincia</label>
+                    <input
+                      type="text"
+                      name="province"
+                      className="form-control text-uppercase"
+                      placeholder="MI"
+                      value={formData.province}
+                      onChange={handleChange}
+                      required
+                      maxLength={2}
+                    />
+                  </div>
+                </div>
               </div>
 
-              {error && <ErrorMessage message={error} />}
+              <div className="col-lg-6">
+                <div className="row g-3">
+                  <div className="col-12">
+                    <label className="form-label fw-medium">Telefono</label>
+                    <input
+                      type="tel"
+                      name="phoneNumber"
+                      className="form-control"
+                      placeholder="+39 333 1234567"
+                      value={formData.phoneNumber}
+                      onChange={handleChange}
+                      required
+                    />
+                  </div>
+                  <div className="col-12">
+                    <label className="form-label fw-medium">Email</label>
+                    <input
+                      type="email"
+                      name="email"
+                      className="form-control"
+                      placeholder="nome@esempio.it"
+                      value={formData.email}
+                      onChange={handleChange}
+                      required
+                    />
+                  </div>
 
-              <form onSubmit={handleSubmit}>
-                
-                <div className="row mb-3">
-                    <div className="col-6">
-                        <label htmlFor="firstName" className="form-label">Nome</label>
-                        <input name="firstName" type="text" id="firstName" placeholder="Nome" value={formData.firstName} onChange={handleChange} required className="form-control" disabled={loading}/>
-                    </div>
-                    <div className="col-6">
-                        <label htmlFor="lastName" className="form-label">Cognome</label>
-                        <input name="lastName" type="text" id="lastName" placeholder="Cognome" value={formData.lastName} onChange={handleChange} required className="form-control" disabled={loading}/>
-                    </div>
-                </div>
+                  <div className="col-12 mt-4"></div>
 
-                <div className="mb-3">
-                  <label htmlFor="taxCode" className="form-label">Codice Fiscale</label>
-                  <input 
-                    name="taxCode" 
-                    type="text" 
-                    id="taxCode" 
-                    placeholder="RSSMRA80A01H501U" 
-                    value={formData.taxCode} 
-                    onChange={handleChange} 
-                    required 
-                    className="form-control text-uppercase"
-                    disabled={loading}
-                    maxLength={16}
-                  />
+                  <div className="col-12">
+                    <label className="form-label fw-medium">Password</label>
+                    <input
+                      type="password"
+                      name="password"
+                      className="form-control"
+                      placeholder="••••••••"
+                      value={formData.password}
+                      onChange={handleChange}
+                      required
+                      minLength={8}
+                    />
+                  </div>
+                  <div className="col-12">
+                    <label className="form-label fw-medium">Conferma Password</label>
+                    <input
+                      type="password"
+                      name="confirmPassword"
+                      className="form-control"
+                      placeholder="••••••••"
+                      value={formData.confirmPassword}
+                      onChange={handleChange}
+                      required
+                    />
+                  </div>
+                  
+                  <div className="col-12 mt-5">
+                    <button 
+                      type="submit" 
+                      className="btn btn-primary btn-lg w-100 fw-bold py-2"
+                      disabled={loading}
+                      style={{ backgroundColor: '#0d2e5b', borderColor: '#0d2e5b' }}
+                    >
+                      {loading ? (
+                        <span><Spinner /> Creazione in corso...</span>
+                      ) : (
+                        "Crea il conto"
+                      )}
+                    </button>
+                  </div>
                 </div>
+              </div>
 
-                <div className="row mb-3">
-                    <div className="col-md-9">
-                        <label htmlFor="street" className="form-label">Via / Piazza</label>
-                        <input name="street" type="text" id="street" placeholder="Via Roma" value={formData.street} onChange={handleChange} required className="form-control" disabled={loading}/>
-                    </div>
-                    <div className="col-md-3">
-                        <label htmlFor="houseNumber" className="form-label">N° Civico</label>
-                        <input name="houseNumber" type="text" id="houseNumber" placeholder="10" value={formData.houseNumber} onChange={handleChange} required className="form-control" disabled={loading}/>
-                    </div>
-                </div>
-
-                <div className="row mb-3">
-                    <div className="col-md-3">
-                        <label htmlFor="zipCode" className="form-label">CAP</label>
-                        <input name="zipCode" type="text" id="zipCode" placeholder="20121" value={formData.zipCode} onChange={handleChange} required className="form-control" disabled={loading} maxLength={5}/>
-                    </div>
-                    <div className="col-md-6">
-                        <label htmlFor="city" className="form-label">Città</label>
-                        <input name="city" type="text" id="city" placeholder="Milano" value={formData.city} onChange={handleChange} required className="form-control" disabled={loading}/>
-                    </div>
-                    <div className="col-md-3">
-                        <label htmlFor="province" className="form-label">Provincia</label>
-                        <input 
-                            name="province" 
-                            type="text" 
-                            id="province" 
-                            placeholder="MI" 
-                            value={formData.province} 
-                            onChange={handleChange} 
-                            required 
-                            className="form-control text-uppercase" 
-                            disabled={loading}
-                            maxLength={2}
-                        />
-                    </div>
-                </div>
-
-                <div className="mb-3">
-                  <label htmlFor="phoneNumber" className="form-label">Telefono</label>
-                  <input 
-                    name="phoneNumber" 
-                    type="tel"
-                    id="phoneNumber" 
-                    placeholder="+39 333 1234567" 
-                    value={formData.phoneNumber} 
-                    onChange={handleChange} 
-                    required 
-                    className="form-control" 
-                    disabled={loading}
-                  />
-                </div>
-
-                <div className="mb-3">
-                  <label htmlFor="email" className="form-label">Email</label>
-                  <input name="email" type="email" id="email" placeholder="La tua email" value={formData.email} onChange={handleChange} required className="form-control" disabled={loading}/>
-                </div>
-
-                <div className="row mb-4">
-                    <div className="col-md-6 mb-3 mb-md-0">
-                        <label htmlFor="password" className="form-label">Password</label>
-                        <input 
-                            name="password" 
-                            type="password" 
-                            id="password" 
-                            placeholder="Password" 
-                            value={formData.password} 
-                            onChange={handleChange} 
-                            required 
-                            className="form-control" 
-                            disabled={loading}
-                            minLength={8}
-                        />
-                    </div>
-                    <div className="col-md-6">
-                        <label htmlFor="confirmPassword" className="form-label">Conferma Password</label>
-                        <input 
-                            name="confirmPassword" 
-                            type="password" 
-                            id="confirmPassword" 
-                            placeholder="Ripeti Password" 
-                            value={confirmPassword} 
-                            onChange={handleConfirmPasswordChange} 
-                            required 
-                            className={`form-control ${confirmPassword && formData.password !== confirmPassword ? 'is-invalid' : ''}`}
-                            disabled={loading}
-                        />
-                        {confirmPassword && formData.password !== confirmPassword && (
-                            <div className="invalid-feedback">
-                                Le password non coincidono
-                            </div>
-                        )}
-                    </div>
-                </div>
-                
-                <button 
-                  type="submit" 
-                  disabled={isFormInvalid}
-                  className="btn btn-primary w-100"
-                >
-                  {loading ? (
-                    <>
-                      <Spinner /> Registrazione in corso...
-                    </>
-                  ) : (
-                    'Crea Conto'
-                  )}
-                </button>
-              </form>
             </div>
-          </div>
-          
-          <p className="mt-3 text-center">
-            Hai già un conto? <Link to="/login" className="text-decoration-none">Accedi qui</Link>
+          </form>
+        </div>
+        
+        <div className="card-footer text-center py-3 bg-light border-0">
+          <p className="mb-0 text-muted">
+            Hai già un conto? <Link to="/login" className="fw-bold text-primary text-decoration-none">Accedi qui</Link>
           </p>
-
         </div>
       </div>
     </div>

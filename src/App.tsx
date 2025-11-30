@@ -3,6 +3,7 @@ import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
 import TransferPage from './pages/TransferPage';
 import RegisterPage from './pages/RegisterPage';
+import UserProfilePage from './pages/UserProfilePage';
 import { useAuth } from './hooks/useAuth';
 
 
@@ -29,6 +30,8 @@ const App: React.FC = () => {
           <Route path="/transfer" element={<TransferPage />} />
           
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
+
+          <Route path="/profile" element={<UserProfilePage />} />
           
       </Route>
 

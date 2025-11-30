@@ -23,12 +23,13 @@ export interface RegisterRequest extends LoginCredentials {
   firstName: string;
   lastName: string;
   taxCode: string;
-  street: string;
+  address: string;
   houseNumber: string;
   city: string;
   province: string;
   zipCode: string;
   phoneNumber: string;
+  birthDate: Date;
 }
 
 export interface BalanceDTO {
@@ -41,13 +42,14 @@ export interface TransactionDTO {
   transactionId: number;
   eventTimestamp: string;
   amount: string;
-  transactionType: string;
+  counterpartyName: string;
   description: string;
 }
 
 export interface TransferDTO {
   senderIban: string;
   receiverIban: string;
+  receiverName: string;
   amount: string; 
   description: string;
 }
@@ -57,4 +59,18 @@ export interface BackendErrorResponse {
   timestamp?: string;
   status?: number;
   path?: string;
+}
+
+export interface UserProfileDTO {
+  firstName: string;
+  lastName: string;
+  birthDate: string;
+  taxCode: string;
+  email: string;
+  phoneNumber: string;
+  address: string;
+  houseNumber: string;
+  zipCode: string;
+  city: string;
+  province: string;
 }

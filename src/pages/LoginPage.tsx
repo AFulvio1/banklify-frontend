@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import type { LoginCredentials } from '../types/Models';
-import { Link } from 'react-router-dom'; // Importa Link per il riferimento alla registrazione
+import { Link } from 'react-router-dom';
 import ErrorMessage from '../components/common/ErrorMessage';
 import Spinner from '../components/common/Spinner';
 import BanklifyLogoHorizontal from '../assets/logo-banklify-horizontal.png';
@@ -34,83 +34,82 @@ const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="container mt-5">
-      <div className="row justify-content-center">
-        <div className="col-md-6 col-lg-4">
-          
-          <div className="card shadow-lg">
-            <div className="card-header text-center bg-primary text-white">
-              <h4 className="mb-0">Login</h4>
-            </div>
-            
-            <div className="card-body">
+    <div className="min-vh-100 bg-light d-flex flex-column align-items-center justify-content-center p-4">
+      
+      <div className="mb-4 text-center">
+        <img 
+          src={BanklifyLogoHorizontal} 
+          alt="Banklify Logo" 
+          className="img-fluid"
+          style={{ maxHeight: '100px' }} 
+        />
+      </div>
 
-              <div className="text-center mb-4">
-                  <img 
-                      src={BanklifyLogoHorizontal} 
-                      alt="Banklify Logo" 
-                      className="img-fluid mb-3" 
-                      style={{ maxHeight: '100px' }}
-                  />
-              </div>
-
-              {error && <ErrorMessage message={error} />}
-
-              <form onSubmit={handleSubmit}>
-                
-                <div className="mb-3">
-                  <label htmlFor="email" className="form-label">Email</label>
-                  <input 
-                    type="email" 
-                    id="email"
-                    name="email" 
-                    placeholder="Esempio: test@banklify.it" 
-                    value={credentials.email} 
-                    onChange={handleChange} 
-                    required 
-                    className="form-control"
-                    disabled={loading}
-                  />
-                </div>
-
-                <div className="mb-3">
-                  <label htmlFor="password" className="form-label">Password</label>
-                  <input 
-                    type="password" 
-                    id="password"
-                    name="password" 
-                    placeholder="Password" 
-                    value={credentials.password} 
-                    onChange={handleChange} 
-                    required 
-                    className="form-control"
-                    disabled={loading}
-                  />
-                </div>
-
-                <button 
-                  type="submit" 
-                  disabled={loading}
-                  className="btn btn-primary w-100"
-                >
-                  {loading ? (
-                    <>
-                      <Spinner /> Accesso in corso...
-                    </>
-                  ) : (
-                    'Accedi'
-                  )}
-                </button>
-              </form>
-            </div>
-          </div>
-          
-          {/* Riferimento alla Pagina di Registrazione */}
-          <p className="mt-3 text-center">
-            Non hai un conto? <Link to="/register" className="text-decoration-none">Registrati qui</Link>
-          </p>
-
+      <div className="card shadow-lg border-0 w-100 overflow-hidden rounded-4" style={{ maxWidth: '450px' }}>
+        
+        <div className="py-3 text-center text-white fw-bold fs-4 rounded-top-4" style={{ backgroundColor: '#0d2e5b' }}>
+          Login
         </div>
+        
+        <div className="card-body p-4 p-md-5">
+
+          {error && <ErrorMessage message={error} />}
+
+          <form onSubmit={handleSubmit}>
+            
+            <div className="mb-3">
+              <label htmlFor="email" className="form-label fw-medium">Email</label>
+              <input 
+                type="email" 
+                id="email"
+                name="email" 
+                placeholder="Esempio: test@banklify.it" 
+                value={credentials.email} 
+                onChange={handleChange} 
+                required 
+                className="form-control"
+                disabled={loading}
+              />
+            </div>
+
+            <div className="mb-4">
+              <label htmlFor="password" className="form-label fw-medium">Password</label>
+              <input 
+                type="password" 
+                id="password"
+                name="password" 
+                placeholder="Password" 
+                value={credentials.password} 
+                onChange={handleChange} 
+                required 
+                className="form-control"
+                disabled={loading}
+              />
+            </div>
+
+            <button 
+              type="submit" 
+              disabled={loading}
+              className="btn btn-primary w-100 fw-bold py-2"
+              style={{ backgroundColor: '#0d2e5b', borderColor: '#0d2e5b' }}
+            >
+              {loading ? (
+                <>
+                  <Spinner /> Accesso in corso...
+                </>
+              ) : (
+                'Accedi'
+              )}
+            </button>
+          </form>
+        </div>
+        
+        <div className="card-footer text-center py-3 bg-light border-0">
+          <p className="mb-0 text-muted">
+            Non hai un conto? <Link to="/register" className="fw-bold text-primary text-decoration-none">Registrati qui</Link>
+          </p>
+        </div>
+
       </div>
     </div>
   );
