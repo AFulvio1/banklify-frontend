@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import client from '../api/client'; // Usa il nuovo client centralizzato
-import { useAuth } from '../hooks/useAuth';
+import { useAuth } from '../context/AuthContext';
 import type { UserProfileDTO } from '../types/Models';
 import Spinner from '../components/common/Spinner';
 import BanklifyLogoHorizontal from '../assets/logo-banklify-horizontal.png';

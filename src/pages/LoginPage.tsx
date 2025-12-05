@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useAuth } from '../hooks/useAuth';
+import { useAuth } from '../context/AuthContext';
 import type { LoginCredentials } from '../types/Models';
 import { Link } from 'react-router-dom';
 import Spinner from '../components/common/Spinner';

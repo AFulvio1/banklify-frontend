@@ -5,7 +5,7 @@ import DashboardPage from './pages/DashboardPage';
 import TransferPage from './pages/TransferPage';
 import RegisterPage from './pages/RegisterPage';
 import UserProfilePage from './pages/UserProfilePage';
-import { useAuth } from './hooks/useAuth';
+import { useAuth } from './context/AuthContext';
 import { Toaster } from 'react-hot-toast'; 
 
 const ProtectedRoute: React.FC = () => {

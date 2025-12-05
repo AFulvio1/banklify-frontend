@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import client from '../api/client'; 
 import toast from 'react-hot-toast'; 
-import { useAuth } from '../hooks/useAuth';
+import { useAuth } from '../context/AuthContext';
 import type { TransferDTO } from '../types/Models';
 import BanklifyLogoHorizontal from '../assets/logo-banklify-horizontal.png';
 
