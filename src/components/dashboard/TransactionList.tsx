@@ -9,8 +9,7 @@ interface TransactionListProps {
 }
 
 const ITEMS_PER_PAGE = 5;
-
-const ROW_HEIGHT = '56px';
+const ROW_HEIGHT = '60px';
 
 const ChevronLeft = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
@@ -29,6 +28,65 @@ const formatCurrency = (amount: string): string => {
   return new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(value);
 };
 
+const PaginatorButton: React.FC<{
+  onClick: () => void;
+  disabled?: boolean;
+  active?: boolean;
+  children: React.ReactNode;
+}> = ({ onClick, disabled, active, children }) => {
+  const [isHovered, setIsHovered] = useState(false);
+
+  const primaryColor = 'var(--bs-primary)';
+  
+  const getBackgroundColor = () => {
+    if (active) return primaryColor;
+    if (isHovered && !disabled) return 'rgba(17, 52, 106, 0.1)';
+    return 'transparent';
+  };
+
+  const getColor = () => {
+    if (active) return 'white';
+    if (isHovered && !disabled) return primaryColor; 
+    return primaryColor;
+  };
+
+  const getBorder = () => {
+    if (active) return 'none';
+    if (isHovered && !disabled) return `1px solid ${primaryColor}`;
+    return '1px solid transparent';
+  };
+
+  const style = {
+    width: '32px',
+    height: '32px',
+    borderRadius: '6px',
+    border: getBorder(),
+    backgroundColor: getBackgroundColor(),
+    color: getColor(),
+    cursor: disabled ? 'default' : 'pointer',
+    opacity: disabled ? 0.5 : 1,
+    transition: 'all 0.2s ease-in-out',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontWeight: 'bold',
+    fontSize: '0.9rem'
+  };
+
+  return (
+    <button
+      className="btn shadow-none p-0"
+      onClick={onClick}
+      disabled={disabled}
+      style={style}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      {children}
+    </button>
+  );
+};
+
 const TransactionList: React.FC<TransactionListProps> = ({ 
   transactions, 
   onLoadMore, 
@@ -44,18 +102,13 @@ const TransactionList: React.FC<TransactionListProps> = ({
   });
 
   const totalLoadedPages = Math.ceil(sortedTransactions.length / ITEMS_PER_PAGE);
-
   const indexOfLastItem = currentPage * ITEMS_PER_PAGE;
   const indexOfFirstItem = indexOfLastItem - ITEMS_PER_PAGE;
-  
   const currentTransactions = sortedTransactions.slice(indexOfFirstItem, indexOfLastItem);
-  
   const emptyRows = ITEMS_PER_PAGE - currentTransactions.length;
 
   const handlePrev = () => {
-    if (currentPage > 1) {
-      setCurrentPage(prev => prev - 1);
-    }
+    if (currentPage > 1) setCurrentPage(prev => prev - 1);
   };
 
   const handleNext = () => {
@@ -92,27 +145,27 @@ const TransactionList: React.FC<TransactionListProps> = ({
 
             return (
               <tr key={t.transactionId || `${t.eventTimestamp}-${t.amount}-${Math.random()}`} style={{ height: ROW_HEIGHT }}>
-                <td className="text-nowrap" style={{ width: '120px' }}>
-                  <div className="fw-bold text-dark" style={{ fontSize: '0.9rem' }}>{formattedDate}</div>
-                  <div className="text-muted" style={{ fontSize: '0.8rem' }}>{formattedTime}</div>
+                <td className="text-nowrap ps-4" style={{ width: '220px' }}>
+                  <div className="d-flex align-items-baseline">
+                    <span className="fw-bold fs-6" style={{ color: 'var(--bs-primary)' }}>{formattedDate}</span>
+                    <span className="ms-2 fs-6 text-muted">{formattedTime}</span>
+                  </div>
                 </td>
 
                 <td>
                   <div className="d-flex align-items-center justify-content-center text-truncate">
-                    <span className="fw-bold text-dark me-2">
+                    <span className="fw-bold me-2 fs-6" style={{ color: 'var(--bs-primary)' }}>
                       {t.counterpartyName || "Sconosciuto"}
                     </span>
-                    
                     <span className="text-muted me-2">-</span>
-                    
-                    <span className="text-muted text-truncate" style={{ maxWidth: '400px' }}>
+                    <span className="text-muted text-truncate" style={{ maxWidth: '350px' }}>
                       {t.description}
                     </span>
                   </div>
                 </td>
 
-                <td className="text-end" style={{ width: '140px' }}>
-                    <span className={`fw-bold ${amountColor}`} style={{ fontSize: '1.1rem' }}>
+                <td className="text-end pe-4" style={{ width: '150px' }}>
+                    <span className={`fw-bold ${amountColor}`} style={{ fontSize: '1.15rem' }}>
                         {formatCurrency(t.amount)}
                     </span>
                 </td>
@@ -122,12 +175,9 @@ const TransactionList: React.FC<TransactionListProps> = ({
 
           {emptyRows > 0 && Array.from({ length: emptyRows }).map((_, index) => (
             <tr key={`empty-${index}`} style={{ height: ROW_HEIGHT }}>
-              <td>&nbsp;</td>
-              <td>&nbsp;</td>
-              <td>&nbsp;</td>
+              <td colSpan={3}>&nbsp;</td>
             </tr>
           ))}
-
         </tbody>
       </table>
       
@@ -138,51 +188,41 @@ const TransactionList: React.FC<TransactionListProps> = ({
       )}
 
       {transactions.length > 0 && (
-        <div className="border-top d-flex align-items-center justify-content-center" style={{ height: ROW_HEIGHT }}>
+        <div className="border-top py-2 d-flex align-items-center justify-content-center bg-light rounded-bottom">
           <nav aria-label="Navigazione transazioni">
-            <ul className="pagination justify-content-center mb-0">
+            <ul className="pagination mb-0 gap-2 align-items-center">
               
-              <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
-                <button 
-                  className="page-link" 
+              <li className="page-item">
+                <PaginatorButton 
                   onClick={handlePrev} 
-                  aria-label="Precedente"
-                  style={{ color: 'var(--bs-primary)' }}
+                  disabled={currentPage === 1}
                 >
                   <ChevronLeft />
-                </button>
+                </PaginatorButton>
               </li>
 
               {Array.from({ length: totalLoadedPages }, (_, i) => i + 1).map(pageNum => (
-                <li key={pageNum} className={`page-item ${currentPage === pageNum ? 'active' : ''}`}>
-                  <button 
-                    className="page-link" 
-                    onClick={() => handlePageClick(pageNum)}
-                    style={{
-                      backgroundColor: currentPage === pageNum ? 'var(--bs-primary)' : 'white',
-                      borderColor: currentPage === pageNum ? 'var(--bs-primary)' : '#dee2e6',
-                      color: currentPage === pageNum ? 'white' : 'var(--bs-primary)'
-                    }}
+                <li key={pageNum} className="page-item">
+                  <PaginatorButton 
+                    onClick={() => handlePageClick(pageNum)} 
+                    active={currentPage === pageNum}
                   >
                     {pageNum}
-                  </button>
+                  </PaginatorButton>
                 </li>
               ))}
 
-              <li className={`page-item ${(!hasMore && currentPage === totalLoadedPages) ? 'disabled' : ''}`}>
-                <button 
-                  className="page-link" 
+              <li className="page-item">
+                <PaginatorButton 
                   onClick={handleNext} 
-                  disabled={isLoading && currentPage === totalLoadedPages}
-                  aria-label="Successivo"
-                  style={{ color: 'var(--bs-primary)' }}
+                  disabled={(isLoading && currentPage === totalLoadedPages) || (!hasMore && currentPage === totalLoadedPages)}
                 >
                   {isLoading && currentPage === totalLoadedPages ? (
                     <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
                   ) : (
                     <ChevronRight />
                   )}
-                </button>
+                </PaginatorButton>
               </li>
 
             </ul>

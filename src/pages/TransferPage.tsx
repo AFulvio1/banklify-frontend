@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axiosInstance from '../api/axiosInstance';
+import client from '../api/client'; 
+import toast from 'react-hot-toast'; 
 import { useAuth } from '../hooks/useAuth';
 import type { TransferDTO } from '../types/Models';
-import { isAxiosError } from '../utils/errorUtils';
-import ErrorMessage from '../components/common/ErrorMessage'; 
 import BanklifyLogoHorizontal from '../assets/logo-banklify-horizontal.png';
 
 const TransferPage: React.FC = () => {
@@ -20,8 +19,6 @@ const TransferPage: React.FC = () => {
     });
     
     const [loading, setLoading] = useState<boolean>(false);
-    const [successMessage, setSuccessMessage] = useState<string | null>(null);
-    const [error, setError] = useState<string | null>(null);
     const [availableBalance, setAvailableBalance] = useState<number | null>(null);
     const [balanceLoading, setBalanceLoading] = useState<boolean>(true);
 
@@ -30,17 +27,17 @@ const TransferPage: React.FC = () => {
             if (userIban) {
                 setBalanceLoading(true);
                 try {
-                    const response = await axiosInstance.get(`/accounts/${userIban}/balance`);
+                    const response = await client.get(`/accounts/${userIban}/balance`);
                     const balanceValue = parseFloat(response.data.availableBalance);
+                    
                     if (!isNaN(balanceValue)) {
                         setAvailableBalance(balanceValue);
                     } else {
-                        console.error("Il saldo ricevuto dall'API non è un numero valido:", response.data.availableBalance);
-                        setError("Errore nel recupero del saldo. Il formato non è corretto.");
+                        console.error("Il saldo ricevuto non è valido:", response.data.availableBalance);
+                        toast.error("Errore nel formato del saldo.");
                     }
                 } catch (err) {
-                    console.error("Impossibile recuperare il saldo", err);
-                    setError("Errore durante il recupero del saldo del conto.");
+                    console.debug("Impossibile recuperare il saldo", err);
                 } finally {
                     setBalanceLoading(false);
                 }
@@ -58,24 +55,23 @@ const TransferPage: React.FC = () => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
-        setError(null);
-        setSuccessMessage(null);
 
         const amountNumber = parseFloat(formData.amount);
+        
         if (isNaN(amountNumber) || amountNumber <= 0) {
-            setError("L'importo deve essere un numero positivo valido.");
+            toast.error("L'importo deve essere un numero positivo valido.");
             setLoading(false);
             return;
         }
 
         if (availableBalance !== null && amountNumber > availableBalance) {
-            setError(`Fondi insufficienti. Il tuo saldo disponibile è € ${new Intl.NumberFormat('it-IT', { minimumFractionDigits: 2 }).format(availableBalance)}`);
+            toast.error(`Fondi insufficienti. Il tuo saldo disponibile è € ${new Intl.NumberFormat('it-IT', { minimumFractionDigits: 2 }).format(availableBalance)}`);
             setLoading(false);
             return;
         }
         
         if (!formData.senderIban) {
-             setError("Errore di sessione: IBAN mittente non trovato.");
+             toast.error("Errore critico: IBAN mittente non trovato.");
              setLoading(false);
              return;
         }
@@ -86,32 +82,20 @@ const TransferPage: React.FC = () => {
                 amount: amountNumber.toFixed(2), 
             };
 
-            const response = await axiosInstance.post('/transactions/transfer', payload);
+            const response = await client.post('/transactions/transfer', payload);
 
-            setSuccessMessage(response.data.message || "Bonifico eseguito con successo!");
+            toast.success(response.data.message || "Bonifico eseguito con successo!");
+            
             setFormData({ ...formData, receiverIban: '', amount: '', description: '' });
 
             if (availableBalance !== null) {
                 setAvailableBalance(parseFloat((availableBalance - amountNumber).toFixed(2))); 
             }
 
-            setTimeout(() => navigate('/dashboard'), 3000); 
+            setTimeout(() => navigate('/dashboard'), 2000); 
 
-        } catch (err: unknown) {
-            console.error("Errore Bonifico:", err);
-            setSuccessMessage(null);
-
-            if (isAxiosError(err) && err.response) {
-                const responseData = err.response.data as { error: string }; 
-                
-                if (responseData && responseData.error) {
-                    setError(responseData.error);
-                } else {
-                    setError("Errore del server non specificato.");
-                }
-            } else {
-                setError("Errore di rete o imprevisto.");
-            }
+        } catch (err) {
+            console.debug("Errore Bonifico:", err);
         } finally {
             setLoading(false);
         }
@@ -127,66 +111,67 @@ const TransferPage: React.FC = () => {
         isNaN(parseFloat(formData.amount));
 
     return (
-        <div className="container py-5">
-            <div className="card shadow-lg mx-auto" style={{ maxWidth: '600px' }}>
-                <div className="card-header bg-primary text-white">
-                    <h2 className="card-title mb-0 fs-4">Esegui un Nuovo Bonifico</h2>
+        <div className="vh-100 vw-100 bg-light d-flex flex-column align-items-center justify-content-center m-0 overflow-hidden p-3">
+
+            <div className="mb-3 text-center flex-shrink-0">
+                <img 
+                    src={BanklifyLogoHorizontal} 
+                    alt="Banklify Logo" 
+                    className="img-fluid" 
+                    style={{ maxHeight: '60px' }}
+                />
+            </div>
+
+            <div className="card shadow-lg border-0 w-100 rounded-4 d-flex flex-column" style={{ maxWidth: '600px', maxHeight: '85vh' }}>
+                
+                <div className="py-3 text-center text-white fw-bold fs-5 rounded-top-4 flex-shrink-0" style={{ backgroundColor: '#0d2e5b' }}>
+                    Nuovo Bonifico
                 </div>
-                <div className="card-body p-4">
-                    
-                    <div className="text-center mb-2">
-                        <img 
-                            src={BanklifyLogoHorizontal} 
-                            alt="Banklify Logo" 
-                            className="img-fluid" 
-                            style={{ maxHeight: '100px' }}
-                        />
+                
+                <div className="card-body p-4 overflow-y-auto">
+
+                    <div className="bg-light rounded-3 p-3 mb-4 border border-light-subtle">
+                        <div className="d-flex justify-content-between align-items-center mb-2">
+                            <span className="text-muted small fw-medium">CONTO DI ADDEBITO</span>
+                            <span className="badge bg-primary-subtle text-primary-emphasis rounded-pill px-3">Mio Conto</span>
+                        </div>
+                        
+                        <div className="font-monospace fw-medium mb-3 text-break small text-dark">
+                            {formData.senderIban || 'Caricamento IBAN...'}
+                        </div>
+                        
+                        <div className="d-flex align-items-baseline justify-content-between border-top pt-2 mt-2">
+                            <span className="small text-muted">Saldo Disponibile</span>
+                            {availableBalance !== null ? (
+                                <span className="fw-bold text-success fs-5">
+                                    € {new Intl.NumberFormat('it-IT', { minimumFractionDigits: 2 }).format(availableBalance)}
+                                </span>
+                            ) : (
+                                <span className="small text-muted fst-italic">Caricamento...</span>
+                            )}
+                        </div>
                     </div>
-
-                    {availableBalance !== null && (
-                        <div className="alert alert-info text-center py-2 mb-3">
-                            Disponibilità attuale: <strong>€ {new Intl.NumberFormat('it-IT', { minimumFractionDigits: 2 }).format(availableBalance)}</strong>
-                        </div>
-                    )}
-
-                    {successMessage && (
-                        <div className="alert alert-success" role="alert">
-                            {successMessage}
-                        </div>
-                    )}
-                    {error && <ErrorMessage message={error} />}
 
                     <form onSubmit={handleSubmit} className="needs-validation" noValidate>
                         
-                        <div className="mb-3">
-                            <label htmlFor="senderIban" className="form-label fw-semibold">IBAN Mittente</label>
-                            <input
-                                type="text"
-                                id="senderIban"
-                                value={formData.senderIban}
-                                readOnly 
-                                className="form-control bg-light"
-                                placeholder="Caricamento IBAN..."
-                            />
-                            <div className="form-text">I fondi saranno prelevati da questo conto.</div>
+                        <div className="row g-2 mb-3">
+                            <div className="col-12">
+                                <label htmlFor="receiverName" className="form-label fw-medium small">Intestatario</label>
+                                <input
+                                    type="text"
+                                    id="receiverName"
+                                    name="receiverName"
+                                    value={formData.receiverName}
+                                    onChange={handleChange}
+                                    required
+                                    className="form-control"
+                                    placeholder="Mario Rossi"
+                                />
+                            </div>
                         </div>
 
                         <div className="mb-3">
-                            <label htmlFor="receiverIban" className="form-label fw-semibold">Nome Destinatario</label>
-                            <input
-                                type="text"
-                                id="receiverName"
-                                name="receiverName"
-                                value={formData.receiverName}
-                                onChange={handleChange}
-                                required
-                                className="form-control"
-                                placeholder="Mario Rossi"
-                            />
-                        </div>
-
-                        <div className="mb-3">
-                            <label htmlFor="receiverIban" className="form-label fw-semibold">IBAN Destinatario</label>
+                            <label htmlFor="receiverIban" className="form-label fw-medium small">IBAN Destinatario</label>
                             <input
                                 type="text"
                                 id="receiverIban"
@@ -198,27 +183,29 @@ const TransferPage: React.FC = () => {
                                 className="form-control"
                                 placeholder="ITxx xxxxx xxxxx xxxxxxxxxxxx"
                             />
-                            <div className="invalid-feedback">Inserisci un IBAN destinatario valido.</div>
                         </div>
 
                         <div className="mb-3">
-                            <label htmlFor="amount" className="form-label fw-semibold">Importo (€)</label>
-                            <input
-                                type="number"
-                                id="amount"
-                                name="amount"
-                                value={formData.amount}
-                                onChange={handleChange}
-                                required
-                                min="0.01"
-                                step="0.01"
-                                className="form-control"
-                                placeholder="0.00"
-                            />
+                            <label htmlFor="amount" className="form-label fw-medium small">Importo (€)</label>
+                            <div className="input-group">
+                                <span className="input-group-text">€</span>
+                                <input
+                                    type="number"
+                                    id="amount"
+                                    name="amount"
+                                    value={formData.amount}
+                                    onChange={handleChange}
+                                    required
+                                    min="0.01"
+                                    step="0.01"
+                                    className="form-control fw-bold"
+                                    placeholder="0.00"
+                                />
+                            </div>
                         </div>
 
                         <div className="mb-4">
-                            <label htmlFor="description" className="form-label fw-semibold">Causale</label>
+                            <label htmlFor="description" className="form-label fw-medium small">Causale</label>
                             <textarea
                                 id="description"
                                 name="description"
@@ -234,11 +221,21 @@ const TransferPage: React.FC = () => {
                         <button
                             type="submit"
                             disabled={isFormInvalid}
-                            className="btn btn-success btn-lg w-100"
+                            className="btn btn-success btn-lg w-100 fw-bold shadow-sm"
                         >
-                            {loading ? 'Elaborazione in corso...' : 'Conferma Bonifico'}
+                            {loading ? 'Elaborazione...' : 'Conferma Bonifico'}
                         </button>
                     </form>
+                </div>
+
+                <div className="card-footer text-center py-3 bg-light border-0 flex-shrink-0">
+                    <button 
+                        type="button" 
+                        onClick={() => navigate('/dashboard')}
+                        className="btn btn-link text-decoration-none text-muted small"
+                    >
+                        Annulla e torna alla Dashboard
+                    </button>
                 </div>
             </div>
         </div>

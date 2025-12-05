@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import type { LoginCredentials } from '../types/Models';
 import { Link } from 'react-router-dom';
-import ErrorMessage from '../components/common/ErrorMessage';
 import Spinner from '../components/common/Spinner';
 import BanklifyLogoHorizontal from '../assets/logo-banklify-horizontal.png';
 
@@ -10,7 +9,6 @@ const LoginPage: React.FC = () => {
   const { login } = useAuth();
   const [credentials, setCredentials] = useState<LoginCredentials>({ email: '', password: '' });
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setCredentials({ ...credentials, [e.target.name]: e.target.value });
@@ -19,22 +17,18 @@ const LoginPage: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError(null);
+    
     try {
       await login(credentials);
-    } catch (err: unknown) {
-      if (err instanceof Error) {
-        setError(err.message || "Credenziali non valide. Riprova.");
-      } else {
-        setError(String(err) || "Credenziali non valide. Riprova.");
-      }
+    } catch {
+      console.debug("Login fallito (gestito globalmente)");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-vh-100 bg-light d-flex flex-column align-items-center justify-content-center p-4">
+    <div className="vh-100 vw-100 bg-light d-flex flex-column align-items-center justify-content-center m-0 overflow-hidden">
       
       <div className="mb-4 text-center">
         <img 
@@ -52,8 +46,6 @@ const LoginPage: React.FC = () => {
         </div>
         
         <div className="card-body p-4 p-md-5">
-
-          {error && <ErrorMessage message={error} />}
 
           <form onSubmit={handleSubmit}>
             
@@ -93,13 +85,7 @@ const LoginPage: React.FC = () => {
               className="btn btn-primary w-100 fw-bold py-2"
               style={{ backgroundColor: '#0d2e5b', borderColor: '#0d2e5b' }}
             >
-              {loading ? (
-                <>
-                  <Spinner /> Accesso in corso...
-                </>
-              ) : (
-                'Accedi'
-              )}
+              {loading ? ( <> <Spinner /> Accesso in corso... </> ) : ( 'Accedi' )}
             </button>
           </form>
         </div>

@@ -1,23 +1,20 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axiosInstance from '../api/axiosInstance';
+import client from '../api/client'; // Usa il nuovo client centralizzato
 import { useAuth } from '../hooks/useAuth';
-import type { BalanceDTO, TransactionDTO, BackendErrorResponse } from '../types/Models';
-import { isAxiosError } from '../utils/errorUtils';
+import type { BalanceDTO, TransactionDTO } from '../types/Models';
 import Spinner from '../components/common/Spinner'; 
-import ErrorMessage from '../components/common/ErrorMessage'; 
 import BalanceCard from '../components/dashboard/BalanceCard';
 import TransactionList from '../components/dashboard/TransactionList';
 import BanklifyLogoHorizontal from '../assets/logo-banklify-horizontal.png';
 
 const DashboardPage: React.FC = () => {
     const navigate = useNavigate();
-    const { isAuthenticated, userIban, userFirstName, logout } = useAuth();
+    const { isAuthenticated, userIban, userFirstName, logout } = useAuth(); 
     
     const [balance, setBalance] = useState<BalanceDTO | null>(null);
     const [transactions, setTransactions] = useState<TransactionDTO[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
-    const [error, setError] = useState<string | null>(null);
 
     const [page, setPage] = useState(0);
     const [hasMore, setHasMore] = useState(true);
@@ -28,17 +25,16 @@ const DashboardPage: React.FC = () => {
     const fetchData = useCallback(async () => {
         if (!isAuthenticated || !userIban) {
             setLoading(false);
-            setError("IBAN non disponibile o sessione scaduta.");
             return;
         }
 
         setLoading(true);
-        setError(null);
 
         try {
-            const balanceResponse = await axiosInstance.get<BalanceDTO>(`/accounts/${userIban}/balance`);
+            const balanceResponse = await client.get<BalanceDTO>(`/accounts/${userIban}/balance`);
             setBalance(balanceResponse.data);
-            const transactionsResponse = await axiosInstance.get<TransactionDTO[]>(`/transactions/${userIban}/movements`, {
+
+            const transactionsResponse = await client.get<TransactionDTO[]>(`/transactions/${userIban}/movements`, {
                 params: {
                     page: 0,
                     limit: 10
@@ -47,37 +43,22 @@ const DashboardPage: React.FC = () => {
             const initialTransactions = transactionsResponse.data;
             setTransactions(initialTransactions);
             setPage(0);
-            if (initialTransactions.length < 10) {
-                setHasMore(false);
-            } else {
-                setHasMore(true);
-            }
-        } catch (err: unknown) {
-            console.error("Errore nel fetching dei dati:", err);
-            if (isAxiosError(err) && err.response) {
-                const errorData = err.response.data as BackendErrorResponse;
-                if (err.response.status === 401 || err.response.status === 403) {
-                    setError("Sessione scaduta. Effettua nuovamente il login.");
-                    logout(); 
-                    return;
-                }
-                setError(errorData.error || `Errore HTTP ${err.response.status}: Impossibile connettersi.`);
-            } else if (err instanceof Error) {
-                setError(err.message);
-            } else {
-                setError("Errore sconosciuto durante il caricamento.");
-            }
+            setHasMore(initialTransactions.length >= 10);
+            
+        } catch (err) {
+            console.debug("Errore caricamento dashboard:", err);
         } finally {
             setLoading(false);
         }
-    }, [isAuthenticated, userIban, logout]);
+    }, [isAuthenticated, userIban]);
 
     const handleLoadMore = async () => {
         if (!userIban) return;
         setLoadingMore(true);
         const nextPage = page + 1;
+        
         try {
-            const response = await axiosInstance.get<TransactionDTO[]>(`/transactions/${userIban}/movements`, {
+            const response = await client.get<TransactionDTO[]>(`/transactions/${userIban}/movements`, {
                 params: {
                     page: nextPage,
                     limit: 10
@@ -90,7 +71,7 @@ const DashboardPage: React.FC = () => {
             setTransactions(prev => [...prev, ...newTransactions]);
             setPage(nextPage);
         } catch (err) {
-            console.error("Errore nel caricamento delle transazioni aggiuntive:", err);
+            console.debug("Errore caricamento altre transazioni:", err);
         } finally {
             setLoadingMore(false);
         }
@@ -108,17 +89,31 @@ const DashboardPage: React.FC = () => {
         );
     }
     
-    if (error || !balance) {
+    if (!balance) {
          return (
             <div className="container mt-5">
-                <div className="card shadow-sm p-4 mx-auto" style={{ maxWidth: '500px' }}>
-                    <ErrorMessage message={error || "Errore nel caricamento dei dati principali."} />
-                    <button 
-                        onClick={logout} 
-                        className="btn btn-danger btn-block mt-3"
-                    >
-                        Esci e Riprova
-                    </button>
+                <div className="card shadow-sm p-4 mx-auto text-center" style={{ maxWidth: '500px' }}>
+                    <div className="mb-3 text-danger">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
+                        </svg>
+                    </div>
+                    <h4>Dati non disponibili</h4>
+                    <p className="text-muted">Impossibile recuperare le informazioni del conto.</p>
+                    <div className="d-grid gap-2 col-8 mx-auto mt-3">
+                        <button 
+                            onClick={() => window.location.reload()} 
+                            className="btn btn-primary"
+                        >
+                            Riprova
+                        </button>
+                        <button 
+                            onClick={logout} 
+                            className="btn btn-outline-secondary"
+                        >
+                            Torna al Login
+                        </button>
+                    </div>
                 </div>
             </div>
         );
@@ -197,7 +192,7 @@ const DashboardPage: React.FC = () => {
                         />
                         
                         <div className="card shadow-sm p-3">
-                            <h3 className="card-title fs-5 mb-3">Operazioni Rapide</h3>
+                            <h3 className="card-title fs-5 fw-bold mb-3" style={{ color: 'var(--bs-primary)' }}>Operazioni Rapide</h3>
                             <button 
                                 onClick={() => navigate('/transfer')} 
                                 className="btn btn-primary btn-lg"
@@ -210,7 +205,7 @@ const DashboardPage: React.FC = () => {
 
                 <div className="col-lg-8">
                     <div className="card shadow-lg p-4">
-                        <h3 className="card-title fs-4 fw-bold mb-4">Ultime Transazioni</h3>
+                        <h3 className="card-title fs-4 fw-bold mb-4" style={{ color: 'var(--bs-primary)' }}>Ultime Transazioni</h3>
                         <TransactionList 
                             transactions={transactions} 
                             onLoadMore={handleLoadMore}

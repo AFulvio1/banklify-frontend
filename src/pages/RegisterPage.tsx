@@ -1,14 +1,13 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import axiosInstance from '../api/axiosInstance';
+import client from '../api/client';
+import toast from 'react-hot-toast';
 import Spinner from '../components/common/Spinner';
-import ErrorMessage from '../components/common/ErrorMessage';
 import BanklifyLogoHorizontal from '../assets/logo-banklify-horizontal.png';
 
 const RegisterPage: React.FC = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
     firstName: '',
@@ -35,17 +34,16 @@ const RegisterPage: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
 
     if (formData.password !== formData.confirmPassword) {
-      setError("Le password non coincidono.");
+      toast.error("Le password non coincidono.");
       return;
     }
 
     setLoading(true);
 
     try {
-      await axiosInstance.post('/auth/register', {
+      await client.post('/auth/register', {
         firstName: formData.firstName,
         lastName: formData.lastName,
         birthDate: formData.birthDate,
@@ -60,48 +58,44 @@ const RegisterPage: React.FC = () => {
         phoneNumber: formData.phoneNumber
       });
 
-      navigate('/login', { state: { successMessage: 'Registrazione avvenuta con successo! Accedi ora.' } });
-    } catch (err: unknown) {
-      if (err instanceof Error) {
-        setError(err.message || "Errore durante la registrazione.");
-      } else {
-        setError(String(err) || "Errore durante la registrazione.");
-      }
+      toast.success('Registrazione avvenuta con successo!');
+      navigate('/login');
+      
+    } catch {
+      console.debug("Errore registrazione gestito globalmente");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-vh-100 bg-light d-flex flex-column align-items-center justify-content-center p-4">
+    <div className="vh-100 vw-100 bg-light d-flex flex-column align-items-center justify-content-center m-0 overflow-hidden p-3">
       
-      <div className="mb-4 text-center">
+      <div className="mb-3 text-center flex-shrink-0">
         <img 
           src={BanklifyLogoHorizontal} 
           alt="Banklify" 
           className="img-fluid"
-          style={{ maxHeight: '100px' }} 
+          style={{ maxHeight: '80px' }} // Logo leggermente più piccolo per salvare spazio verticale
         />
       </div>
 
-      <div className="card shadow-lg border-0 w-100 overflow-hidden rounded-4" style={{ maxWidth: '1200px' }}>
+      <div className="card shadow-lg border-0 w-100 rounded-4 d-flex flex-column" style={{ maxWidth: '1000px', maxHeight: '85vh' }}>
         
-        <div className="py-3 text-center text-white fw-bold fs-4 rounded-top-4" style={{ backgroundColor: '#0d2e5b' }}>
+        <div className="py-3 text-center text-white fw-bold fs-5 rounded-top-4 flex-shrink-0" style={{ backgroundColor: '#0d2e5b' }}>
           Registrati
         </div>
 
-        <div className="card-body p-5">
+        <div className="card-body p-4 overflow-y-auto">
           
-          {error && <ErrorMessage message={error} />}
-
           <form onSubmit={handleSubmit}>
             
-            <div className="row g-5">
+            <div className="row g-3">
               
               <div className="col-lg-6">
-                <div className="row g-3">
+                <div className="row g-2">
                   <div className="col-md-6">
-                    <label className="form-label fw-medium">Nome</label>
+                    <label className="form-label fw-medium small">Nome</label>
                     <input
                       type="text"
                       name="firstName"
@@ -113,7 +107,7 @@ const RegisterPage: React.FC = () => {
                     />
                   </div>
                   <div className="col-md-6">
-                    <label className="form-label fw-medium">Cognome</label>
+                    <label className="form-label fw-medium small">Cognome</label>
                     <input
                       type="text"
                       name="lastName"
@@ -126,7 +120,7 @@ const RegisterPage: React.FC = () => {
                   </div>
 
                   <div className="col-12">
-                    <label className="form-label fw-medium">Data di Nascita</label>
+                    <label className="form-label fw-medium small">Data di Nascita</label>
                     <input
                       type="date"
                       name="birthDate"
@@ -138,7 +132,7 @@ const RegisterPage: React.FC = () => {
                   </div>
 
                   <div className="col-12">
-                    <label className="form-label fw-medium">Codice Fiscale</label>
+                    <label className="form-label fw-medium small">Codice Fiscale</label>
                     <input
                       type="text"
                       name="taxCode"
@@ -151,10 +145,10 @@ const RegisterPage: React.FC = () => {
                     />
                   </div>
 
-                  <div className="col-12 mt-4"></div>
+                  <div className="col-12 my-1"><hr className="text-muted opacity-25"/></div>
 
                   <div className="col-md-9">
-                    <label className="form-label fw-medium">Via / Piazza</label>
+                    <label className="form-label fw-medium small">Via / Piazza</label>
                     <input
                       type="text"
                       name="address"
@@ -166,7 +160,7 @@ const RegisterPage: React.FC = () => {
                     />
                   </div>
                   <div className="col-md-3">
-                    <label className="form-label fw-medium">N° Civico</label>
+                    <label className="form-label fw-medium small">N° Civico</label>
                     <input
                       type="text"
                       name="houseNumber"
@@ -178,7 +172,7 @@ const RegisterPage: React.FC = () => {
                     />
                   </div>
                   <div className="col-md-3">
-                    <label className="form-label fw-medium">CAP</label>
+                    <label className="form-label fw-medium small">CAP</label>
                     <input
                       type="text"
                       name="zipCode"
@@ -191,7 +185,7 @@ const RegisterPage: React.FC = () => {
                     />
                   </div>
                   <div className="col-md-6">
-                    <label className="form-label fw-medium">Città</label>
+                    <label className="form-label fw-medium small">Città</label>
                     <input
                       type="text"
                       name="city"
@@ -203,7 +197,7 @@ const RegisterPage: React.FC = () => {
                     />
                   </div>
                   <div className="col-md-3">
-                    <label className="form-label fw-medium">Provincia</label>
+                    <label className="form-label fw-medium small">Prov</label>
                     <input
                       type="text"
                       name="province"
@@ -218,10 +212,10 @@ const RegisterPage: React.FC = () => {
                 </div>
               </div>
 
-              <div className="col-lg-6">
-                <div className="row g-3">
+              <div className="col-lg-6 d-flex flex-column justify-content-between">
+                <div className="row g-2">
                   <div className="col-12">
-                    <label className="form-label fw-medium">Telefono</label>
+                    <label className="form-label fw-medium small">Telefono</label>
                     <input
                       type="tel"
                       name="phoneNumber"
@@ -233,7 +227,7 @@ const RegisterPage: React.FC = () => {
                     />
                   </div>
                   <div className="col-12">
-                    <label className="form-label fw-medium">Email</label>
+                    <label className="form-label fw-medium small">Email</label>
                     <input
                       type="email"
                       name="email"
@@ -245,10 +239,10 @@ const RegisterPage: React.FC = () => {
                     />
                   </div>
 
-                  <div className="col-12 mt-4"></div>
+                  <div className="col-12 my-1"><hr className="text-muted opacity-25"/></div>
 
                   <div className="col-12">
-                    <label className="form-label fw-medium">Password</label>
+                    <label className="form-label fw-medium small">Password</label>
                     <input
                       type="password"
                       name="password"
@@ -261,7 +255,7 @@ const RegisterPage: React.FC = () => {
                     />
                   </div>
                   <div className="col-12">
-                    <label className="form-label fw-medium">Conferma Password</label>
+                    <label className="form-label fw-medium small">Conferma Password</label>
                     <input
                       type="password"
                       name="confirmPassword"
@@ -273,10 +267,10 @@ const RegisterPage: React.FC = () => {
                     />
                   </div>
                   
-                  <div className="col-12 mt-5">
+                  <div className="col-12 mt-4">
                     <button 
                       type="submit" 
-                      className="btn btn-primary btn-lg w-100 fw-bold py-2"
+                      className="btn btn-primary btn-lg w-100 fw-bold py-2 shadow-sm"
                       disabled={loading}
                       style={{ backgroundColor: '#0d2e5b', borderColor: '#0d2e5b' }}
                     >
@@ -294,8 +288,8 @@ const RegisterPage: React.FC = () => {
           </form>
         </div>
         
-        <div className="card-footer text-center py-3 bg-light border-0">
-          <p className="mb-0 text-muted">
+        <div className="card-footer text-center py-3 bg-light border-0 flex-shrink-0">
+          <p className="mb-0 text-muted small">
             Hai già un conto? <Link to="/login" className="fw-bold text-primary text-decoration-none">Accedi qui</Link>
           </p>
         </div>

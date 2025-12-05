@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axiosInstance from '../api/axiosInstance';
+import client from '../api/client'; // Usa il nuovo client centralizzato
 import { useAuth } from '../hooks/useAuth';
 import type { UserProfileDTO } from '../types/Models';
 import Spinner from '../components/common/Spinner';
-import ErrorMessage from '../components/common/ErrorMessage';
 import BanklifyLogoHorizontal from '../assets/logo-banklify-horizontal.png';
 
 const UserProfilePage: React.FC = () => {
@@ -13,7 +12,6 @@ const UserProfilePage: React.FC = () => {
   
   const [profile, setProfile] = useState<UserProfileDTO | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -21,11 +19,10 @@ const UserProfilePage: React.FC = () => {
       
       try {
         setLoading(true);
-        const response = await axiosInstance.get<UserProfileDTO>('/client/profile');
+        const response = await client.get<UserProfileDTO>('/client/profile');
         setProfile(response.data);
-      } catch (err: unknown) {
-        console.error("Errore recupero profilo:", err);
-        setError("Impossibile caricare i dati del profilo.");
+      } catch (err) {
+        console.debug("Errore recupero profilo:", err);
       } finally {
         setLoading(false);
       }
@@ -42,11 +39,12 @@ const UserProfilePage: React.FC = () => {
     );
   }
 
-  if (error || !profile) {
+  if (!profile) {
     return (
         <div className="container mt-5">
-            <div className="card shadow-sm p-4 mx-auto" style={{ maxWidth: '600px' }}>
-                <ErrorMessage message={error || "Profilo non trovato."} />
+            <div className="card shadow-sm p-4 mx-auto text-center" style={{ maxWidth: '600px' }}>
+                <h4 className="text-danger mb-3">Profilo non disponibile</h4>
+                <p className="text-muted">Impossibile visualizzare i dati utente. Riprova più tardi.</p>
                 <button onClick={() => navigate('/dashboard')} className="btn btn-primary mt-3">
                     Torna alla Dashboard
                 </button>

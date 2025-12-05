@@ -1,113 +1,74 @@
-import React, { createContext, useState, useEffect, useMemo } from 'react';
+import React, { createContext, useContext, useState, useCallback, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
-import type { AuthContextType, LoginCredentials, LoginResponse, RegisterRequest, BackendErrorResponse } from '../types/Models';
-import { isAxiosError } from '../utils/errorUtils'; // Utilità per gestire gli errori Axios
+import client from '../api/client';
+import type { LoginCredentials } from '../types/Models';
 
-const API_BASE_URL = '/api/v1/auth';
-const TOKEN_KEY = 'bank_jwt_token';
-const IBAN_KEY = 'user_iban';
-const FIRST_NAME_KEY = 'user_first_name';
-
-export interface ExtendedAuthContextType extends AuthContextType {
-    userIban: string | null;
-    register: (request: RegisterRequest) => Promise<void>;
+interface AuthContextType {
+  isAuthenticated: boolean;
+  userIban: string | null;
+  userFirstName: string | null;
+  login: (credentials: LoginCredentials) => Promise<void>;
+  logout: () => void;
 }
 
 // eslint-disable-next-line react-refresh/only-export-components
-export const AuthContext = createContext<ExtendedAuthContextType | undefined>(undefined);
+export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const navigate = useNavigate();
+
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
+    const token = localStorage.getItem('token');
+    const iban = localStorage.getItem('userIban');
+    const name = localStorage.getItem('userFirstName');
+    return !!(token && iban && name);
+  });
+
+  const [userIban, setUserIban] = useState<string | null>(() => localStorage.getItem('userIban'));
+  const [userFirstName, setUserFirstName] = useState<string | null>(() => localStorage.getItem('userFirstName'));
+
+  const logout = useCallback(() => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('userIban');
+    localStorage.removeItem('userFirstName');
     
-    const [token, setToken] = useState<string | null>(
-        localStorage.getItem(TOKEN_KEY)
-    );
-    const [userIban, setUserIban] = useState<string | null>(
-        localStorage.getItem(IBAN_KEY)
-    );
-    const [userFirstName, setUserFirstName] = useState<string | null>(
-      localStorage.getItem(FIRST_NAME_KEY)
-    );
-
-    const [isLoaded, setIsLoaded] = useState(false);
-    const navigate = useNavigate();
-
-    useEffect(() => {
-        setIsLoaded(true);
-    }, []);
-
-    const login = async (credentials: LoginCredentials) => {
-        try {
-            const response = await axios.post<LoginResponse>(`${API_BASE_URL}/login`, credentials);
-            const { token: newToken, iban: userPrimaryIban, firstName: userPrimaryFirstName } = response.data;
-            
-            if (!userPrimaryIban) {
-                console.error("Login riuscito ma IBAN mancante nella risposta.");
-                throw new Error("Dati del conto primario mancanti. Riprovare.");
-            }
-
-            setToken(newToken);
-            setUserIban(userPrimaryIban);
-            setUserFirstName(userPrimaryFirstName);
-
-            localStorage.setItem(TOKEN_KEY, newToken);
-            localStorage.setItem(IBAN_KEY, userPrimaryIban);
-            localStorage.setItem(FIRST_NAME_KEY, userPrimaryFirstName);
-            
-            navigate('/dashboard', { replace: true });
-
-        } catch (err: unknown) {
-            if (isAxiosError(err) && err.response) {
-                const errorData = err.response.data as BackendErrorResponse;
-                throw new Error(errorData.error || "Credenziali non valide.");
-            }
-            throw new Error("Errore di rete o del server durante il login.");
-        }
-    };
-
-    const register = async (request: RegisterRequest) => {
-        try {
-            await axios.post(`${API_BASE_URL}/register`, request);
-            
-            await login({ email: request.email, password: request.password });
-
-        } catch (err: unknown) {
-            if (isAxiosError(err) && err.response) {
-                const errorData = err.response.data as BackendErrorResponse;
-                throw new Error(errorData.error || "Errore durante la registrazione.");
-            }
-            throw new Error("Errore di rete o del server durante la registrazione.");
-        }
-    };
-
-    const logout = () => {
-        setToken(null);
-        setUserIban(null);
-        setUserFirstName(null);
-        localStorage.removeItem(TOKEN_KEY);
-        localStorage.removeItem(IBAN_KEY);
-        localStorage.removeItem(FIRST_NAME_KEY);
-        navigate('/login', { replace: true }); 
-    };
-
-    const contextValue: ExtendedAuthContextType = useMemo(() => ({
-        isAuthenticated: !!token && isLoaded,
-        token,
-        userIban,
-        userFirstName,
-        login,
-        logout,
-        register,
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }), [token, userIban, isLoaded, navigate]);
+    setIsAuthenticated(false);
+    setUserIban(null);
+    setUserFirstName(null);
     
-    if (!isLoaded) {
-        return <div>Caricamento sessione...</div>; 
+    navigate('/login');
+  }, [navigate]);
+
+  const login = async (credentials: LoginCredentials) => {
+    const response = await client.post('/auth/login', credentials);
+    
+    const { token, iban, firstName } = response.data;
+    
+    if (token) {
+        localStorage.setItem('token', token);
+        if (iban) localStorage.setItem('userIban', iban);
+        if (firstName) localStorage.setItem('userFirstName', firstName);
+
+        setIsAuthenticated(true);
+        setUserIban(iban || null);
+        setUserFirstName(firstName || null);
+        
+        navigate('/dashboard');
     }
+  };
 
-    return (
-        <AuthContext.Provider value={contextValue}>
-            {children}
-        </AuthContext.Provider>
-    );
+  return (
+    <AuthContext.Provider value={{ isAuthenticated, userIban, userFirstName, login, logout }}>
+      {children}
+    </AuthContext.Provider>
+  );
+};
+
+// eslint-disable-next-line react-refresh/only-export-components
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth deve essere usato all\'interno di un AuthProvider');
+  }
+  return context;
 };
